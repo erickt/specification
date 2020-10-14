@@ -26,1044 +26,1183 @@ repo](https://github.com/theupdateframework/specification/issues).
 
 ## Scope ## {#scope}
 
-   This document describes a framework for securing software update systems.
+This document describes a framework for securing software update systems.
 
-   The keywords "MUST," "MUST NOT," "REQUIRED," "SHALL," "SHALL NOT," "SHOULD,"
-   "SHOULD NOT," "RECOMMENDED," "MAY," and "OPTIONAL" in this document are to be
-   interpreted as described in [RFC 2119](https://tools.ietf.org/html/rfc2119).
+The keywords "MUST," "MUST NOT," "REQUIRED," "SHALL," "SHALL NOT," "SHOULD,"
+"SHOULD NOT," "RECOMMENDED," "MAY," and "OPTIONAL" in this document are to be
+interpreted as described in [RFC 2119](https://tools.ietf.org/html/rfc2119).
 
 ## Motivation ## {#motivation}
 
-   Software is commonly updated through software update systems.  These systems
-   can be package managers that are responsible for all of the software that is
-   installed on a system, application updaters that are only responsible for
-   individual installed applications, or software library managers that install
-   software that adds functionality such as plugins or programming language
-   libraries.
+Software is commonly updated through software update systems.  These systems
+can be package managers that are responsible for all of the software that is
+installed on a system, application updaters that are only responsible for
+individual installed applications, or software library managers that install
+software that adds functionality such as plugins or programming language
+libraries.
 
-   Software update systems all have the common behavior of downloading files
-   that identify whether updates exist and, when updates do exist, downloading
-   the files that are required for the update.  For the implementations
-   concerned with security, various integrity and authenticity checks are
-   performed on downloaded files.
+Software update systems all have the common behavior of downloading files
+that identify whether updates exist and, when updates do exist, downloading
+the files that are required for the update.  For the implementations
+concerned with security, various integrity and authenticity checks are
+performed on downloaded files.
 
-   Software update systems are vulnerable to a variety of known attacks.  This
-   is generally true even for implementations that have tried to be secure.
+Software update systems are vulnerable to a variety of known attacks.  This
+is generally true even for implementations that have tried to be secure.
 
 ## History and credit ## {#history-and-credit}
 
-   Work on TUF began in late 2009.  The core ideas are based off of previous
-   work done by Justin Cappos and Justin Samuel that [identified security flaws
-   in all popular Linux package managers](https://theupdateframework.io/papers/attacks-on-package-managers-ccs2008.pdf).
-   More information and current versions of this document can be found at
-   https://theupdateframework.io/
+Work on TUF began in late 2009.  The core ideas are based off of previous
+work done by Justin Cappos and Justin Samuel that [identified security flaws
+in all popular Linux package managers](https://theupdateframework.io/papers/attacks-on-package-managers-ccs2008.pdf).
+More information and current versions of this document can be found at
+https://theupdateframework.io/
 
-   The [Global Environment for Network Innovations](https://www.geni.net/) (GENI)
-   and the [National Science Foundation](https://www.nsf.gov/) (NSF) have
-   provided support for the development of TUF.
+The [Global Environment for Network Innovations](https://www.geni.net/) (GENI)
+and the [National Science Foundation](https://www.nsf.gov/) (NSF) have
+provided support for the development of TUF.
 
-   TUF's reference implementation is based on prior work on
-   [Thandy](https://www.torproject.org/), the application
-   updater for Tor. Its design and this spec
-   also came from ideas jointly developed in discussion with Thandy's authors.
-   The Thandy spec can be found at
-   https://gitweb.torproject.org/thandy.git/tree/specs/thandy-spec.txt
+TUF's reference implementation is based on prior work on
+[Thandy](https://www.torproject.org/), the application
+updater for Tor. Its design and this spec
+also came from ideas jointly developed in discussion with Thandy's authors.
+The Thandy spec can be found at
+https://gitweb.torproject.org/thandy.git/tree/specs/thandy-spec.txt
 
-   Whereas Thandy is an application updater for an individual software project,
-   TUF aims to provide a way to secure any software update system. We're very
-   grateful to the Tor Project and the Thandy developers for the early discussion
-   that led to the ideas in Thandy and TUF. Thandy is the hard
-   work of Nick Mathewson, Sebastian Hahn, Roger Dingledine, Martin Peck, and
-   others.
+Whereas Thandy is an application updater for an individual software project,
+TUF aims to provide a way to secure any software update system. We're very
+grateful to the Tor Project and the Thandy developers for the early discussion
+that led to the ideas in Thandy and TUF. Thandy is the hard
+work of Nick Mathewson, Sebastian Hahn, Roger Dingledine, Martin Peck, and
+others.
 
 ## Non-goals ## {#non-goals}
 
-   We are not creating a universal update system, but rather a simple and
-   flexible way that applications can have high levels of security with their
-   software update systems.  Creating a universal software update system would
-   not be a reasonable goal due to the diversity of application-specific
-   functionality in software update systems and the limited usefulness that
-   such a system would have for securing legacy software update systems.
+We are not creating a universal update system, but rather a simple and
+flexible way that applications can have high levels of security with their
+software update systems.  Creating a universal software update system would
+not be a reasonable goal due to the diversity of application-specific
+functionality in software update systems and the limited usefulness that
+such a system would have for securing legacy software update systems.
 
-   We won't be defining package formats or even performing the actual update
-   of application files.  We will provide the simplest mechanism possible that
-   remains easy to use and provides a secure way for applications to obtain and
-   verify files being distributed by trusted parties.
+We won't be defining package formats or even performing the actual update
+of application files.  We will provide the simplest mechanism possible that
+remains easy to use and provides a secure way for applications to obtain and
+verify files being distributed by trusted parties.
 
-   We are not providing a means to bootstrap security so that arbitrary
-   installation of new software is secure.  In practice this means that people
-   still need to use other means to verify the integrity and authenticity of
-   files they download manually.
+We are not providing a means to bootstrap security so that arbitrary
+installation of new software is secure.  In practice this means that people
+still need to use other means to verify the integrity and authenticity of
+files they download manually.
 
-   The framework will not have the responsibility of deciding on the correct
-   course of action in all error situations, such as those that can occur when
-   certain attacks are being performed.  Instead, the framework will provide
-   the software update system the relevant information about any errors that
-   require security decisions which are situation-specific.  How those errors
-   are handled is up to the software update system.
+The framework will not have the responsibility of deciding on the correct
+course of action in all error situations, such as those that can occur when
+certain attacks are being performed.  Instead, the framework will provide
+the software update system the relevant information about any errors that
+require security decisions which are situation-specific.  How those errors
+are handled is up to the software update system.
 
 ## Goals ## {#goals}
 
-   We need to provide a framework (a set of libraries, file formats, and
-   utilities) that can be used to secure new and existing software update
-   systems.
+We need to provide a framework (a set of libraries, file formats, and
+utilities) that can be used to secure new and existing software update
+systems.
 
-   The framework should enable applications to be secure from all known attacks
-   on the software update process.  It is not concerned with exposing
-   information about what software is being updated (and thus what software
-   the client may be running) or the contents of updates.
+The framework should enable applications to be secure from all known attacks
+on the software update process.  It is not concerned with exposing
+information about what software is being updated (and thus what software
+the client may be running) or the contents of updates.
 
-   The framework should provide means to minimize the impact of key compromise.
-   To do so, it must support roles with multiple keys and threshold/quorum
-   trust (with the exception of minimally trusted roles designed to use a
-   single key).  The compromise of roles using highly vulnerable keys should
-   have minimal impact.  Therefore, online keys (keys which are used in an
-   automated fashion) must not be used for any role that clients ultimately
-   trust for files they may install.
+The framework should provide means to minimize the impact of key compromise.
+To do so, it must support roles with multiple keys and threshold/quorum
+trust (with the exception of minimally trusted roles designed to use a
+single key).  The compromise of roles using highly vulnerable keys should
+have minimal impact.  Therefore, online keys (keys which are used in an
+automated fashion) must not be used for any role that clients ultimately
+trust for files they may install.
 
-   The framework must be flexible enough to meet the needs of a wide variety of
-   software update systems.
+The framework must be flexible enough to meet the needs of a wide variety of
+software update systems.
 
-   The framework must be easy to integrate with software update systems.
+The framework must be easy to integrate with software update systems.
 
 ### Goals for implementation ### {#goals-for-implementation}
 
-      + The client side of the framework must be straightforward to implement in any
-        programming language and for any platform with the requisite networking and
-        crypto support.
++ The client side of the framework must be straightforward to implement in any
+  programming language and for any platform with the requisite networking and
+  crypto support.
 
-      +  The process by which developers push updates to the repository must be
-         simple.
++ The process by which developers push updates to the repository must be
+  simple.
 
-      + The framework must be secure to use in environments that lack support for
-        SSL (TLS).  This does not exclude the optional use of SSL when available,
-        but the framework will be designed without it.
++ The framework must be secure to use in environments that lack support for
+  SSL (TLS).  This does not exclude the optional use of SSL when available,
+  but the framework will be designed without it.
 
 ### Goals to protect against specific attacks ### {#goals-to-protect-against-specific-attacks}
 
-      Note: When saying the framework protects against an attack, it means the
-      attack will be unsuccessful.  It does not mean that a client will always
-      successfully update during an attack.  Fundamentally, an attacker
-      positioned to intercept and modify a client's communication can always
-      perform a denial of service.  Nevertheless, the framework must detect
-      when a client is unable to update.
+Note: When saying the framework protects against an attack, it means the
+attack will be unsuccessful.  It does not mean that a client will always
+successfully update during an attack.  Fundamentally, an attacker
+positioned to intercept and modify a client's communication can always
+perform a denial of service.  Nevertheless, the framework must detect
+when a client is unable to update.
 
-      + **Arbitrary installation attacks.** An attacker cannot install anything
-        they want on the client system. That is, an attacker cannot provide
-        arbitrary files in response to download requests.
++ **Arbitrary installation attacks.** An attacker cannot install anything
+  they want on the client system. That is, an attacker cannot provide
+  arbitrary files in response to download requests.
 
-      + **Endless data attacks.**  An attacker cannot respond to client
-        requests with huge amounts of data (extremely large files) that interfere
-        with the client's system.
++ **Endless data attacks.**  An attacker cannot respond to client
+  requests with huge amounts of data (extremely large files) that interfere
+  with the client's system.
 
-      + **Extraneous dependencies attacks.**  An attacker cannot cause clients
-        to download or install software dependencies that are not the intended
-        dependencies.
++ **Extraneous dependencies attacks.**  An attacker cannot cause clients
+  to download or install software dependencies that are not the intended
+  dependencies.
 
-      + **Fast-forward attacks.**  An attacker cannot arbitrarily increase the
-        version numbers of metadata files, listed in the snapshot metadata, well
-        beyond the current value and thus tricking a software update system into
-        thinking any subsequent updates are trying to rollback the package to a
-        previous, out-of-date version.  In some situations, such as those where
-        there is a maximum possible version number, the perpetrator cannot use a
-        number so high that the system would never be able to match it with the
-        one in the snapshot metadata, and thus new updates could never be
-        downloaded.
++ **Fast-forward attacks.**  An attacker cannot arbitrarily increase the
+  version numbers of metadata files, listed in the snapshot metadata, well
+  beyond the current value and thus tricking a software update system into
+  thinking any subsequent updates are trying to rollback the package to a
+  previous, out-of-date version.  In some situations, such as those where
+  there is a maximum possible version number, the perpetrator cannot use a
+  number so high that the system would never be able to match it with the
+  one in the snapshot metadata, and thus new updates could never be
+  downloaded.
 
-      + **Indefinite freeze attacks.**  An attacker cannot respond to client
-        requests with the same, outdated metadata without the client being aware
-        of the problem.
++ **Indefinite freeze attacks.**  An attacker cannot respond to client
+  requests with the same, outdated metadata without the client being aware
+  of the problem.
 
-      + **Malicious mirrors preventing updates.**  A repository mirror cannot
-        prevent updates from good mirrors.
++ **Malicious mirrors preventing updates.**  A repository mirror cannot
+  prevent updates from good mirrors.
 
-      + **Mix-and-match attacks.**  An attacker cannot trick clients into using
-        a combination of metadata that never existed together on the repository
-        at the same time.
++ **Mix-and-match attacks.**  An attacker cannot trick clients into using
+  a combination of metadata that never existed together on the repository
+  at the same time.
 
-      + **Rollback attacks.**  An attacker cannot trick clients into installing
-        software that is older than that which the client previously knew to be
-        available.
++ **Rollback attacks.**  An attacker cannot trick clients into installing
+  software that is older than that which the client previously knew to be
+  available.
 
-      + **Vulnerability to key compromises.** An attacker, who is able to
-        compromise a single key or less than a given threshold of keys, cannot
-        compromise clients.  This includes compromising a single online key (such
-        as only being protected by SSL) or a single offline key (such as most
-        software update systems use to sign files).
++ **Vulnerability to key compromises.** An attacker, who is able to
+  compromise a single key or less than a given threshold of keys, cannot
+  compromise clients.  This includes compromising a single online key (such
+  as only being protected by SSL) or a single offline key (such as most
+  software update systems use to sign files).
 
-      + **Wrong software installation.**  An attacker cannot provide a file
-        (trusted or untrusted) that is not the one the client wanted.
++ **Wrong software installation.**  An attacker cannot provide a file
+  (trusted or untrusted) that is not the one the client wanted.
 
 ### Goals for PKI ### {#goals-for-pki}
 
-      * Software update systems using the framework's client code interface should
-        never have to directly manage keys.
+* Software update systems using the framework's client code interface should
+  never have to directly manage keys.
 
-      * All keys must be easily and safely revocable.  Trusting new keys for a role
-        must be easy.
+* All keys must be easily and safely revocable.  Trusting new keys for a role
+  must be easy.
 
-      * For roles where trust delegation is meaningful, a role should be able to
-        delegate full or limited trust to another role.
+* For roles where trust delegation is meaningful, a role should be able to
+  delegate full or limited trust to another role.
 
-      * The root of trust must not rely on external PKI.  That is, no authority will
-        be derived from keys outside of the framework.
+* The root of trust must not rely on external PKI.  That is, no authority will
+  be derived from keys outside of the framework.
 
 ### TUF Augmentation Proposal support ### {#tuf-augmentation-proposal-support}
 
-      * This version (1.0.0) of the specification adheres to the following TAPS:
+* This version (1.0.0) of the specification adheres to the following TAPS:
 
-        - [TAP 6](https://github.com/theupdateframework/taps/blob/master/tap6.md):
-            Include specification version in metadata
-        - [TAP 9](https://github.com/theupdateframework/taps/blob/master/tap9.md):
-            Mandatory Metadata signing schemes
-        - [Tap 10](https://github.com/theupdateframework/taps/blob/master/tap10.md):
-            Remove native support for compressed metadata
+  - [TAP 6](https://github.com/theupdateframework/taps/blob/master/tap6.md):
+    Include specification version in metadata
+  - [TAP 9](https://github.com/theupdateframework/taps/blob/master/tap9.md):
+    Mandatory Metadata signing schemes
+  - [Tap 10](https://github.com/theupdateframework/taps/blob/master/tap10.md):
+    Remove native support for compressed metadata
 
-        Implementations compliant with this version (1.0.0) of the specification
-        must also comply with the TAPs mentioned above.
+Implementations compliant with this version (1.0.0) of the specification
+must also comply with the TAPs mentioned above.
 
 # System overview # {#system-overview}
 
-   The framework ultimately provides a secure method of obtaining trusted
-   files.  To avoid ambiguity, we will refer to the files the framework is used
-   to distribute as "target files".  Target files are opaque to the framework.
-   Whether target files are packages containing multiple files, single text
-   files, or executable binaries is irrelevant to the framework.
+The framework ultimately provides a secure method of obtaining trusted
+files.  To avoid ambiguity, we will refer to the files the framework is used
+to distribute as "target files".  Target files are opaque to the framework.
+Whether target files are packages containing multiple files, single text
+files, or executable binaries is irrelevant to the framework.
 
-   The metadata describing target files is the information necessary to
-   securely identify the file and indicate which roles are trusted to provide
-   the file.  As providing additional information about
-   target files may be important to some software update systems using the
-   framework, additional arbitrary information can be provided with any target
-   file. This information will be included in signed metadata that describes
-   the target files.
+The metadata describing target files is the information necessary to
+securely identify the file and indicate which roles are trusted to provide
+the file.  As providing additional information about
+target files may be important to some software update systems using the
+framework, additional arbitrary information can be provided with any target
+file. This information will be included in signed metadata that describes
+the target files.
 
-   The following are the high-level steps of using the framework from the
-   viewpoint of a software update system using the framework.  This is an
-   error-free case.
+The following are the high-level steps of using the framework from the
+viewpoint of a software update system using the framework.  This is an
+error-free case.
 
-       Polling:
-            Periodically, the software update system using the framework
-            instructs the framework to check each repository for updates.  If
-            the framework reports to the application code that there are
-            updates, the application code determines whether it wants to
-            download the updated target files.  Only target files that are
-            trusted (referenced by properly signed and timely metadata) are
-            made available by the framework.
+  : Polling
+  ::
+    Periodically, the software update system using the framework
+    instructs the framework to check each repository for updates.  If
+    the framework reports to the application code that there are
+    updates, the application code determines whether it wants to
+    download the updated target files.  Only target files that are
+    trusted (referenced by properly signed and timely metadata) are
+    made available by the framework.
 
-       Fetching:
-            For each file that the application wants, it asks the framework to
-            download the file.  The framework downloads the file and performs
-            security checks to ensure that the downloaded file is exactly what
-            is expected according to the signed metadata.  The application code
-            is not given access to the file until the security checks have been
-            completed.  The application asks the framework to copy the
-            downloaded file to a location specified by the application.  At
-            this point, the application has securely obtained the target file
-            and can do with it whatever it wishes.
+  : Fetching
+  ::
+    For each file that the application wants, it asks the framework to
+    download the file.  The framework downloads the file and performs
+    security checks to ensure that the downloaded file is exactly what
+    is expected according to the signed metadata.  The application code
+    is not given access to the file until the security checks have been
+    completed.  The application asks the framework to copy the
+    downloaded file to a location specified by the application.  At
+    this point, the application has securely obtained the target file
+    and can do with it whatever it wishes.
 
 ## Roles and PKI ## {#roles-and-pki}
 
-   In the discussion of roles that follows, it is important to remember that
-   the framework has been designed to allow a large amount of flexibility for
-   many different use cases.  For example, it is possible to use the framework
-   with a single key that is the only key used in the entire system.  This is
-   considered to be insecure but the flexibility is provided in order to meet
-   the needs of diverse use cases.
+In the discussion of roles that follows, it is important to remember that
+the framework has been designed to allow a large amount of flexibility for
+many different use cases.  For example, it is possible to use the framework
+with a single key that is the only key used in the entire system.  This is
+considered to be insecure but the flexibility is provided in order to meet
+the needs of diverse use cases.
 
-   There are four fundamental top-level roles in the framework:
-     - Root role
-     - Targets role
-     - Snapshot role
-     - Timestamp role
+There are four fundamental top-level roles in the framework:
+  - Root role
+  - Targets role
+  - Snapshot role
+  - Timestamp role
 
-   There is also one optional top-level role:
-     - Mirrors role
+There is also one optional top-level role:
+  - Mirrors role
 
-   All roles can use one or more keys and require a threshold of signatures of
-   the role's keys in order to trust a given metadata file.
+All roles can use one or more keys and require a threshold of signatures of
+the role's keys in order to trust a given metadata file.
 
 ### Root Role ### {#root-role}
 
-      + The root role delegates trust to specific keys trusted for all other
-        top-level roles used in the system.
+  + The root role delegates trust to specific keys trusted for all other
+    top-level roles used in the system.
 
-      + The client-side of the framework MUST ship with trusted root keys for each
-        configured repository.
+  + The client-side of the framework MUST ship with trusted root keys for each
+    configured repository.
 
-      + The root role's private keys MUST be kept very secure and thus should be
-        kept offline.  If less than a threshold of Root keys are compromised, the
-        repository should revoke trust on the compromised keys.  This can be
-        accomplished with a normal rotation of root keys, covered in section 6.1
-        (Key management and migration). If a threshold of root keys is compromised,
-        the Root keys should be updated out-of-band, however, the threshold should
-        be chosen so that this is extremely unlikely.  In the unfortunate event that
-        a threshold of keys are compromised, it is safest to assume that attackers
-        have installed malware and taken over affected machines.  For this reason,
-        making it difficult for attackers to compromise all of the offline keys is
-        important because safely recovering from it is nearly impossible.
+  + The root role's private keys MUST be kept very secure and thus should be
+    kept offline.  If less than a threshold of Root keys are compromised, the
+    repository should revoke trust on the compromised keys.  This can be
+    accomplished with a normal rotation of root keys, covered in section 6.1
+    (Key management and migration). If a threshold of root keys is compromised,
+    the Root keys should be updated out-of-band, however, the threshold should
+    be chosen so that this is extremely unlikely.  In the unfortunate event that
+    a threshold of keys are compromised, it is safest to assume that attackers
+    have installed malware and taken over affected machines.  For this reason,
+    making it difficult for attackers to compromise all of the offline keys is
+    important because safely recovering from it is nearly impossible.
 
 
 ### Targets role ### {#targets-role}
 
-      The targets role's signature indicates which target files are trusted by
-      clients.  The targets role signs metadata that describes these files, not
-      the actual target files themselves.
+The targets role's signature indicates which target files are trusted by
+clients.  The targets role signs metadata that describes these files, not
+the actual target files themselves.
 
-      In addition, the targets role can delegate full or partial trust to other
-      roles.  Delegating trust means that the targets role indicates another role
-      (that is, another set of keys and the threshold required for trust) is
-      trusted to sign target file metadata.  Partial trust delegation is when the
-      delegated role is only trusted for some of the target files that the
-      delegating role is trusted for.
+In addition, the targets role can delegate full or partial trust to other
+roles.  Delegating trust means that the targets role indicates another role
+(that is, another set of keys and the threshold required for trust) is
+trusted to sign target file metadata.  Partial trust delegation is when the
+delegated role is only trusted for some of the target files that the
+delegating role is trusted for.
 
-      Delegated roles can further delegate trust to other delegated
-      roles.  This provides for multiple levels of trust delegation where each
-      role can delegate full or partial trust for the target files they are
-      trusted for.  The delegating role in these cases is still trusted.  That is,
-      a role does not become untrusted when it has delegated trust.
+Delegated roles can further delegate trust to other delegated
+roles.  This provides for multiple levels of trust delegation where each
+role can delegate full or partial trust for the target files they are
+trusted for.  The delegating role in these cases is still trusted.  That is,
+a role does not become untrusted when it has delegated trust.
 
-      Any delegation can be revoked at any time: the delegating role needs only
-      to sign new metadata that no longer contains that delegation.
+Any delegation can be revoked at any time: the delegating role needs only
+to sign new metadata that no longer contains that delegation.
 
 ### Snapshot role ### {#snapshot-role}
 
-      The snapshot role signs a metadata file that provides information about
-      the latest version of all targets metadata on the repository
-      (the top-level targets role and all delegated roles).  This information allows
-      clients to know which metadata files have been updated and also prevents
-      mix-and-match attacks.
+The snapshot role signs a metadata file that provides information about
+the latest version of all targets metadata on the repository
+(the top-level targets role and all delegated roles).  This information allows
+clients to know which metadata files have been updated and also prevents
+mix-and-match attacks.
 
 ### Timestamp role ### {#timestamp-role}
 
-      To prevent an adversary from replaying an out-of-date signed metadata file
-      whose signature has not yet expired, an automated process periodically signs
-      a timestamped statement containing the hash of the snapshot file.  Even
-      though this timestamp key must be kept online, the risk posed to clients by
-      the compromise of this key is minimal.
+To prevent an adversary from replaying an out-of-date signed metadata file
+whose signature has not yet expired, an automated process periodically signs
+a timestamped statement containing the hash of the snapshot file.  Even
+though this timestamp key must be kept online, the risk posed to clients by
+the compromise of this key is minimal.
 
 ### Mirrors role ### {#mirrors-role}
 
-      Every repository has one or more mirrors from which files can be downloaded
-      by clients.  A software update system using the framework may choose to
-      hard-code the mirror information in their software or they may choose to use
-      mirror metadata files that can optionally be signed by a mirrors role.
+Every repository has one or more mirrors from which files can be downloaded
+by clients.  A software update system using the framework may choose to
+hard-code the mirror information in their software or they may choose to use
+mirror metadata files that can optionally be signed by a mirrors role.
 
-      The importance of using signed mirror lists depends on the application and
-      the users of that application.  There is minimal risk to the application's
-      security from being tricked into contacting the wrong mirrors.  This is
-      because the framework has very little trust in repositories.
+The importance of using signed mirror lists depends on the application and
+the users of that application.  There is minimal risk to the application's
+security from being tricked into contacting the wrong mirrors.  This is
+because the framework has very little trust in repositories.
 
 ## Threat Model And Analysis ## {#thread-model}
 
-   We assume an adversary who can respond to client requests, whether by acting
-   as a man-in-the-middle or through compromising repository mirrors.  At
-   worst, such an adversary can deny updates to users if no good mirrors are
-   accessible.  An inability to obtain updates is noticed by the framework.
+We assume an adversary who can respond to client requests, whether by acting
+as a man-in-the-middle or through compromising repository mirrors.  At
+worst, such an adversary can deny updates to users if no good mirrors are
+accessible.  An inability to obtain updates is noticed by the framework.
 
-   If an adversary compromises enough keys to sign metadata, the best that can
-   be done is to limit the number of users who are affected.  The level to
-   which this threat is mitigated is dependent on how the application is using
-   the framework.  This includes whether different keys have been used for
-   different signing roles.
+If an adversary compromises enough keys to sign metadata, the best that can
+be done is to limit the number of users who are affected.  The level to
+which this threat is mitigated is dependent on how the application is using
+the framework.  This includes whether different keys have been used for
+different signing roles.
 
-   A detailed threat analysis is outside the scope of this document.  This is
-   partly because the specific threat posted to clients in many situations is
-   largely determined by how the framework is being used.
+A detailed threat analysis is outside the scope of this document.  This is
+partly because the specific threat posted to clients in many situations is
+largely determined by how the framework is being used.
 
 # The repository # {#repository}
 
-   An application uses the framework to interact with one or more repositories.
-   A repository is a conceptual source of target files of interest to the
-   application.  Each repository has one or more mirrors which are the actual
-   providers of files to be downloaded.  For example, each mirror may specify a
-   different host where files can be downloaded from over HTTP.
+An application uses the framework to interact with one or more repositories.
+A repository is a conceptual source of target files of interest to the
+application.  Each repository has one or more mirrors which are the actual
+providers of files to be downloaded.  For example, each mirror may specify a
+different host where files can be downloaded from over HTTP.
 
-   The mirrors can be full or partial mirrors as long as the application-side
-   of the framework can ultimately obtain all of the files it needs.  A mirror
-   is a partial mirror if it is missing files that a full mirror should have.
-   If a mirror is intended to only act as a partial mirror, the metadata and
-   target paths available from that mirror can be specified.
+The mirrors can be full or partial mirrors as long as the application-side
+of the framework can ultimately obtain all of the files it needs.  A mirror
+is a partial mirror if it is missing files that a full mirror should have.
+If a mirror is intended to only act as a partial mirror, the metadata and
+target paths available from that mirror can be specified.
 
-   Roles, trusted keys, and target files are completely separate between
-   repositories.  A multi-repository setup is a multi-root system.  When an
-   application uses the framework with multiple repositories, the framework
-   does not perform any "mixing" of the trusted content from each repository.
-   It is up to the application to determine the significance of the same or
-   different target files provided from separate repositories.
+Roles, trusted keys, and target files are completely separate between
+repositories.  A multi-repository setup is a multi-root system.  When an
+application uses the framework with multiple repositories, the framework
+does not perform any "mixing" of the trusted content from each repository.
+It is up to the application to determine the significance of the same or
+different target files provided from separate repositories.
+
 
 ## Repository layout ## {#repository-layout}
 
-   The filesystem layout in the repository is used for two purposes:
-     - To give mirrors an easy way to mirror only some of the repository.
-     - To specify which parts of the repository a given role has authority
-         to sign/provide.
+The filesystem layout in the repository is used for two purposes:
+  - To give mirrors an easy way to mirror only some of the repository.
+  - To specify which parts of the repository a given role has authority
+      to sign/provide.
+
 
 ### Target files ### {#target-files}
 
-   The filenames and the directory structure of target files available from
-   a repository are not specified by the framework.  The names of these files
-   and directories are completely at the discretion of the application using
-   the framework.
+The filenames and the directory structure of target files available from
+a repository are not specified by the framework.  The names of these files
+and directories are completely at the discretion of the application using
+the framework.
 
 ### Metadata files ### {#metadata-files}
 
-   The filenames and directory structure of repository metadata are strictly
-   defined.  All metadata filenames will have an extension (EXT) based on the
-   metaformat, for example JSON metadata files would have an EXT of json.
-   The following are the metadata files of top-level roles relative
-   to the base URL of metadata available from a given repository mirror.
+The filenames and directory structure of repository metadata are strictly
+defined.  All metadata filenames will have an extension (EXT) based on the
+metaformat, for example JSON metadata files would have an EXT of json.
+The following are the metadata files of top-level roles relative
+to the base URL of metadata available from a given repository mirror.
 
-    /root.EXT
+  : /root.EXT
+  :: 
+      Signed by the root keys; specifies trusted keys for the other
+      top-level roles.
 
-         Signed by the root keys; specifies trusted keys for the other
-         top-level roles.
+  : /snapshot.EXT
+  ::
+      Signed by the snapshot role's keys.  Lists the version numbers of all
+      target metadata files: the top-level targets.EXT and all delegated
+      roles.
 
-    /snapshot.EXT
+  : /targets.EXT
+  ::
+      Signed by the target role's keys.  Lists hashes and sizes of target
+      files. Specifies delegation information and trusted keys for delegated
+      target roles.
 
-         Signed by the snapshot role's keys.  Lists the version numbers of all
-         target metadata files: the top-level targets.EXT and all delegated
-         roles.
+  : /timestamp.EXT
+  ::
+      Signed by the timestamp role's keys.  Lists hash(es), size, and version
+      number of the snapshot file.  This is the first and potentially only
+      file that needs to be downloaded when clients poll for the existence
+      of updates.
 
-    /targets.EXT
+  : /mirrors.EXT (optional)
+  ::
+      Signed by the mirrors role's keys.  Lists information about available
+      mirrors and the content available from each mirror.
 
-         Signed by the target role's keys.  Lists hashes and sizes of target
-         files. Specifies delegation information and trusted keys for delegated
-         target roles.
-
-    /timestamp.EXT
-
-         Signed by the timestamp role's keys.  Lists hash(es), size, and version
-         number of the snapshot file.  This is the first and potentially only
-         file that needs to be downloaded when clients poll for the existence
-         of updates.
-
-    /mirrors.EXT (optional)
-
-         Signed by the mirrors role's keys.  Lists information about available
-         mirrors and the content available from each mirror.
 
 #### Metadata files for targets delegation #### {#metadata-files-for-targets-delegation}
 
-   When the targets role delegates trust to other roles, each delegated role
-   provides one signed metadata file.  As is the case with the directory
-   structure of top-level metadata, the delegated files are relative to the
-   base URL of metadata available from a given repository mirror.
+When the targets role delegates trust to other roles, each delegated role
+provides one signed metadata file.  As is the case with the directory
+structure of top-level metadata, the delegated files are relative to the
+base URL of metadata available from a given repository mirror.
 
-   A delegated role file is located at:
+A delegated role file is located at:
 
-    /DELEGATED_ROLE.EXT
+ /DELEGATED_ROLE.EXT
 
-   where DELEGATED_ROLE is the name of the delegated role that has been
-   specified in targets.EXT.  If this role further delegates trust to a role
-   named ANOTHER_ROLE, that role's signed metadata file is made available at:
+where DELEGATED_ROLE is the name of the delegated role that has been
+specified in targets.EXT.  If this role further delegates trust to a role
+named ANOTHER_ROLE, that role's signed metadata file is made available at:
 
-    /ANOTHER_ROLE.EXT
+ /ANOTHER_ROLE.EXT
 
-   Delegated target roles are authorized by the keys listed in the directly
-   delegating target role.
+Delegated target roles are authorized by the keys listed in the directly
+delegating target role.
+
 
 # Document formats # {#document-formats}
 
-   All of the formats described below include the ability to add more
-   attribute-value fields for backwards-compatible format changes.  If
-   a backwards incompatible format change is needed, a new filename can
-   be used.
+All of the formats described below include the ability to add more
+attribute-value fields for backwards-compatible format changes.  If
+a backwards incompatible format change is needed, a new filename can
+be used.
+
 
 ## Metaformat ## {#metaformat}
 
-   Implementers of TUF may use any data format for metadata files as long as
-   all fields in this specification are included and TUF clients are able to
-   interpret them without ambiguity. Implementers should choose a data format
-   that allows for canonicalization, or one that will decode data
-   deterministically by default so that signatures can be accurately verified.
-   The examples in this document use a subset of the JSON object format, with
-   floating-point numbers omitted.  When calculating the digest of an
-   object, we use the "canonical JSON" subdialect as described at
-        http://wiki.laptop.org/go/Canonical_JSON
+Implementers of TUF may use any data format for metadata files as long as
+all fields in this specification are included and TUF clients are able to
+interpret them without ambiguity. Implementers should choose a data format
+that allows for canonicalization, or one that will decode data
+deterministically by default so that signatures can be accurately verified.
+The examples in this document use a subset of the JSON object format, with
+floating-point numbers omitted.  When calculating the digest of an
+object, we use the "canonical JSON" subdialect as described at
+http://wiki.laptop.org/go/Canonical_JSON
+
 
 ## File formats: general principles ## {#file-format-general-principles}
 
-   All signed metadata objects have the format:
+All signed metadata objects have the format:
 
-       { "signed" : ROLE,
-         "signatures" : [
-            { "keyid" : KEYID,
-              "sig" : SIGNATURE }
-            , ... ]
-       }
+<pre highlight="json">
+{
+  "signed" : ROLE,
+  "signatures" : [
+    { "keyid" : KEYID,
+      "sig" : SIGNATURE }
+      , ... ]
+}
+</pre>
 
-   where:
+where:
 
-          ROLE is a dictionary whose "_type" field describes the role type.
+  : ROLE
+  ::
+    a dictionary whose "_type" field describes the role type.
 
-          KEYID is the identifier of the key signing the ROLE dictionary.
+  : KEYID
+  ::
+    the identifier of the key signing the ROLE dictionary.
 
-          SIGNATURE is a hex-encoded signature of the canonical form of
-          the metadata for ROLE.
+  : SIGNATURE
+  ::
+    a hex-encoded signature of the canonical form of the metadata for ROLE.
 
 
-   All keys have the format:
+All keys have the format:
 
-        { "keytype" : KEYTYPE,
-          "scheme" : SCHEME,
-          "keyval" : KEYVAL
-        }
+<pre highlight="json">
+{
+  "keytype" : KEYTYPE,
+  "scheme" : SCHEME,
+  "keyval" : KEYVAL
+}
+</pre>
 
-   where:
+where:
 
-          KEYTYPE is a string denoting a public key signature system, such
-          as RSA or ECDSA.
+  : KEYTYPE
+  ::
+    a string denoting a public key signature system, such as RSA or ECDSA.
 
-          SCHEME is a string denoting a corresponding signature scheme.  For
-          example: "rsassa-pss-sha256" and "ecdsa-sha2-nistp256".
+  : SCHEME
+  ::
+    a string denoting a corresponding signature scheme.  For
+    example: "rsassa-pss-sha256" and "ecdsa-sha2-nistp256".
 
-          KEYVAL is a dictionary containing the public portion of the key.
+  : KEYVAL
+  ::
+    a dictionary containing the public portion of the key.
 
-   The reference implementation defines three signature schemes, although TUF
-   is not restricted to any particular signature scheme, key type, or
-   cryptographic library:
+The reference implementation defines three signature schemes, although TUF
+is not restricted to any particular signature scheme, key type, or
+cryptographic library:
 
-       "rsassa-pss-sha256" : RSA Probabilistic signature scheme with appendix.
-        The underlying hash function is SHA256.
-        https://tools.ietf.org/html/rfc3447#page-29
+  : "rsassa-pss-sha256"
+  ::
+    RSA Probabilistic signature scheme with appendix.  The underlying hash
+    function is SHA256. https://tools.ietf.org/html/rfc3447#page-29
 
-       "ed25519" : Elliptic curve digital signature algorithm based on Twisted
-        Edwards curves.
-        https://ed25519.cr.yp.to/
+  : "ed25519"
+  ::
+    Elliptic curve digital signature algorithm based on Twisted Edwards curves.
+    https://ed25519.cr.yp.to/
 
-        "ecdsa-sha2-nistp256" : Elliptic Curve Digital Signature Algorithm
-         with NIST P-256 curve signing and SHA-256 hashing.
-         https://en.wikipedia.org/wiki/Elliptic_Curve_Digital_Signature_Algorithm
+  : "ecdsa-sha2-nistp256"
+  ::
+    Elliptic Curve Digital Signature Algorithm with NIST P-256 curve signing
+    and SHA-256 hashing.
+    https://en.wikipedia.org/wiki/Elliptic_Curve_Digital_Signature_Algorithm
 
-   We define three keytypes below: 'rsa', "ed25519", and "ecdsa", but adopters
-   can define and use any particular keytype, signing scheme, and cryptographic
-   library.
+We define three keytypes below: 'rsa', "ed25519", and "ecdsa", but adopters
+can define and use any particular keytype, signing scheme, and cryptographic
+library.
 
-   The "rsa" format is:
+The "rsa" format is:
 
-        { "keytype" : "rsa",
-          "scheme" : "rsassa-pss-sha256",
-          "keyval" : {"public" : PUBLIC}
-        }
+<pre highlight="json">
+{
+  "keytype" : "rsa",
+  "scheme" : "rsassa-pss-sha256",
+  "keyval" : {"public" : PUBLIC}
+}
+</pre>
 
-   where PUBLIC is in PEM format and a string.  All RSA keys MUST be at least
-   2048 bits.
+where:
 
-   The "ed25519" format is:
+  : PUBLIC
+  ::
+    PEM format and a string.  All RSA keys MUST be at least 2048 bits.
 
-        { "keytype" : "ed25519",
-          "scheme" : "ed25519",
-          "keyval" : {"public" : PUBLIC}
-        }
+The "ed25519" format is:
 
-   where:
+<pre highlight="json">
+{
+  "keytype" : "ed25519",
+  "scheme" : "ed25519",
+  "keyval" : {"public" : PUBLIC}
+}
+</pre>
 
-          PUBLIC is a 64-byte hex encoded string.
+where:
 
-   The "ecdsa" format is:
+  : PUBLIC
+  ::
+    a 64-byte hex encoded string.
 
-        { "keytype" : "ecdsa-sha2-nistp256",
-          "scheme" : "ecdsa-sha2-nistp256",
-          "keyval" : {"public" : PUBLIC}
-        }
+The "ecdsa" format is:
 
-   where:
+<pre highlight="json">
+{
+  "keytype" : "ecdsa-sha2-nistp256",
+  "scheme" : "ecdsa-sha2-nistp256",
+  "keyval" : {"public" : PUBLIC}
+}
+</pre>
 
-        PUBLIC is in PEM format and a string.
+where:
 
-   The KEYID of a key is the hexdigest of the SHA-256 hash of the
-   canonical form of the key.
+  : PUBLIC
+  ::
+    PEM format and a string.
 
-   Metadata date-time data follows the ISO 8601 standard.  The expected format
-   of the combined date and time string is "YYYY-MM-DDTHH:MM:SSZ".  Time is
-   always in UTC, and the "Z" time zone designator is attached to indicate a
-   zero UTC offset.  An example date-time string is "1985-10-21T01:21:00Z".
+The KEYID of a key is the hexdigest of the SHA-256 hash of the
+canonical form of the key.
+
+Metadata date-time data follows the ISO 8601 standard.  The expected format
+of the combined date and time string is "YYYY-MM-DDTHH:MM:SSZ".  Time is
+always in UTC, and the "Z" time zone designator is attached to indicate a
+zero UTC offset.  An example date-time string is "1985-10-21T01:21:00Z".
 
 
 ## File formats: root.json ## {#root.json}
 
-   The root.json file is signed by the root role's keys.  It indicates
-   which keys are authorized for all top-level roles, including the root
-   role itself.  Revocation and replacement of top-level role keys, including
-   for the root role, is done by changing the keys listed for the roles in
-   this file.
+The root.json file is signed by the root role's keys.  It indicates
+which keys are authorized for all top-level roles, including the root
+role itself.  Revocation and replacement of top-level role keys, including
+for the root role, is done by changing the keys listed for the roles in
+this file.
 
-   The "signed" portion of root.json is as follows:
+The "signed" portion of root.json is as follows:
 
-       { "_type" : "root",
-         "spec_version" : SPEC_VERSION,
-         "consistent_snapshot": CONSISTENT_SNAPSHOT,
-         "version" : VERSION,
-         "expires" : EXPIRES,
-         "keys" : {
-             KEYID : KEY
-             , ... },
-         "roles" : {
-             ROLE : {
-               "keyids" : [ KEYID, ... ] ,
-               "threshold" : THRESHOLD }
-             , ... }
-       }
+<pre highlight="json">
+{
+  "_type" : "root",
+  "spec_version" : SPEC_VERSION,
+  "consistent_snapshot": CONSISTENT_SNAPSHOT,
+  "version" : VERSION,
+  "expires" : EXPIRES,
+  "keys" : {
+    KEYID : KEY
+    , ... },
+    "roles" : {
+      ROLE : {
+        "keyids" : [ KEYID, ... ] ,
+        "threshold" : THRESHOLD }
+        , ... }
+}
+</pre>
 
-   SPEC_VERSION is a string that contains the version number of the TUF
-   specification. Its format follows the [Semantic Versioning 2.0.0
-   (semver)](https://semver.org/spec/v2.0.0.html) specification. Metadata is
-   written according to version "spec_version" of the specification, and
-   clients MUST verify that "spec_version" matches the expected version number.
-   Adopters are free to determine what is considered a match (e.g., the version
-   number exactly, or perhaps only the major version number (major.minor.fix).
+where:
 
-   CONSISTENT_SNAPSHOT is a boolean indicating whether the repository supports
-   consistent snapshots.  Section 7 goes into more detail on the consequences
-   of enabling this setting on a repository.
+  : SPEC_VERSION
+  ::
+    is a string that contains the version number of the TUF
+    specification. Its format follows the [Semantic Versioning 2.0.0
+    (semver)](https://semver.org/spec/v2.0.0.html) specification. Metadata is
+    written according to version "spec_version" of the specification, and
+    clients MUST verify that "spec_version" matches the expected version number.
+    Adopters are free to determine what is considered a match (e.g., the version
+    number exactly, or perhaps only the major version number (major.minor.fix).
 
-   VERSION is an integer that is greater than 0.  Clients MUST NOT replace a
-   metadata file with a version number less than the one currently trusted.
+  : CONSISTENT_SNAPSHOT
+  ::
+    a boolean indicating whether the repository supports
+     consistent snapshots.  Section 7 goes into more detail on the consequences
+     of enabling this setting on a repository.
 
-   EXPIRES determines when metadata should be considered expired and no longer
-   trusted by clients.  Clients MUST NOT trust an expired file.
+  : VERSION
+  ::
+    an integer that is greater than 0.  Clients MUST NOT replace a
+    metadata file with a version number less than the one currently trusted.
 
-   A ROLE is one of "root", "snapshot", "targets", "timestamp", or "mirrors".
-   A role for each of "root", "snapshot", "timestamp", and "targets" MUST be
-   specified in the key list. The role of "mirror" is OPTIONAL.  If not
-   specified, the mirror list will not need to be signed if mirror lists are
-   being used.
+  : EXPIRES
+  ::
+    determines when metadata should be considered expired and no longer
+    trusted by clients.  Clients MUST NOT trust an expired file.
 
-   The KEYID MUST be correct for the specified KEY.  Clients MUST calculate
-   each KEYID to verify this is correct for the associated key.  Clients MUST
-   ensure that for any KEYID represented in this key list and in other files,
-   only one unique key has that KEYID.
+  : ROLE
+  ::
+    one of "root", "snapshot", "targets", "timestamp", or "mirrors".
+    A role for each of "root", "snapshot", "timestamp", and "targets" MUST be
+    specified in the key list. The role of "mirror" is OPTIONAL.  If not
+    specified, the mirror list will not need to be signed if mirror lists are
+    being used.
 
-   The THRESHOLD for a role is an integer of the number of keys of that role
-   whose signatures are required in order to consider a file as being properly
-   signed by that role.
+  : KEYID
+  ::
+    The KEYID MUST be correct for the specified KEY.  Clients MUST calculate
+    each KEYID to verify this is correct for the associated key.  Clients MUST
+    ensure that for any KEYID represented in this key list and in other files,
+    only one unique key has that KEYID.
 
-   A root.json example file:
+  : THRESHOLD
+  ::
+    The THRESHOLD for a role is an integer of the number of keys of that role
+    whose signatures are required in order to consider a file as being properly
+    signed by that role.
 
-       {
-       "signatures": [
-        {
-         "keyid": "cb3fbd83df4ba2471a736b065650878280964a98843ec13b457a99b2a21cc3b4",
-         "sig": "a312b9c3cb4a1b693e8ebac5ee1ca9cc01f2661c14391917dcb111517f72370809
-                 f32c890c6b801e30158ac4efe0d4d87317223077784c7a378834249d048306"
+A root.json example file:
+
+<pre highlight="json">
+{
+  "signatures": [
+    {
+      "keyid": "cb3fbd83df4ba2471a736b065650878280964a98843ec13b457a99b2a21cc3b4",
+      "sig": "a312b9c3cb4a1b693e8ebac5ee1ca9cc01f2661c14391917dcb111517f72370809
+      f32c890c6b801e30158ac4efe0d4d87317223077784c7a378834249d048306"
+    }
+  ],
+  "signed": {
+    "_type": "root",
+    "spec_version": "1.0.0",
+    "consistent_snapshot": false,
+    "expires": "2030-01-01T00:00:00Z",
+    "keys": {
+      "1bf1c6e3cdd3d3a8420b19199e27511999850f4b376c4547b2f32fba7e80fca3": {
+        "keytype": "ed25519",
+        "scheme": "ed25519",
+        "keyval": {
+          "public": "72378e5bc588793e58f81c8533da64a2e8f1565c1fcc7f253496394ffc52542c"
         }
-       ],
-       "signed": {
-        "_type": "root",
-        "spec_version": "1.0.0",
-        "consistent_snapshot": false,
-        "expires": "2030-01-01T00:00:00Z",
-        "keys": {
-         "1bf1c6e3cdd3d3a8420b19199e27511999850f4b376c4547b2f32fba7e80fca3": {
-          "keytype": "ed25519",
-          "scheme": "ed25519",
-          "keyval": {
-           "public": "72378e5bc588793e58f81c8533da64a2e8f1565c1fcc7f253496394ffc52542c"
-          }
-         },
-         "135c2f50e57ff11e744d234a62cebad8c38daf399604a7655661cc9199c69164": {
-          "keytype": "ed25519",
-          "scheme": "ed25519",
-          "keyval": {
-           "public": "68ead6e54a43f8f36f9717b10669d1ef0ebb38cee6b05317669341309f1069cb"
-          }
-         },
-         "cb3fbd83df4ba2471a736b065650878280964a98843ec13b457a99b2a21cc3b4": {
-          "keytype": "ed25519",
-          "scheme": "ed25519",
-          "keyval": {
-           "public": "66dd78c5c2a78abc6fc6b267ff1a8017ba0e8bfc853dd97af351949bba021275"
-          }
-         },
-         "66676daa73bdfb4804b56070c8927ae491e2a6c2314f05b854dea94de8ff6bfc": {
-          "keytype": "ed25519",
-          "scheme": "ed25519",
-          "keyval": {
-           "public": "01c61f8dc7d77fcef973f4267927541e355e8ceda757e2c402818dad850f856e"
-          }
-         }
-        },
-        "roles": {
-         "root": {
-          "keyids": [
-           "cb3fbd83df4ba2471a736b065650878280964a98843ec13b457a99b2a21cc3b4"
-          ],
-          "threshold": 1
-         },
-         "snapshot": {
-          "keyids": [
-           "66676daa73bdfb4804b56070c8927ae491e2a6c2314f05b854dea94de8ff6bfc"
-          ],
-          "threshold": 1
-         },
-         "targets": {
-          "keyids": [
-           "135c2f50e57ff11e744d234a62cebad8c38daf399604a7655661cc9199c69164"
-          ],
-          "threshold": 1
-         },
-         "timestamp": {
-          "keyids": [
-           "1bf1c6e3cdd3d3a8420b19199e27511999850f4b376c4547b2f32fba7e80fca3"
-          ],
-          "threshold": 1
-         }
-        },
-        "version": 1
-       }
+      },
+      "135c2f50e57ff11e744d234a62cebad8c38daf399604a7655661cc9199c69164": {
+        "keytype": "ed25519",
+        "scheme": "ed25519",
+        "keyval": {
+          "public": "68ead6e54a43f8f36f9717b10669d1ef0ebb38cee6b05317669341309f1069cb"
+        }
+      },
+      "cb3fbd83df4ba2471a736b065650878280964a98843ec13b457a99b2a21cc3b4": {
+        "keytype": "ed25519",
+        "scheme": "ed25519",
+        "keyval": {
+          "public": "66dd78c5c2a78abc6fc6b267ff1a8017ba0e8bfc853dd97af351949bba021275"
+        }
+      },
+      "66676daa73bdfb4804b56070c8927ae491e2a6c2314f05b854dea94de8ff6bfc": {
+        "keytype": "ed25519",
+        "scheme": "ed25519",
+        "keyval": {
+          "public": "01c61f8dc7d77fcef973f4267927541e355e8ceda757e2c402818dad850f856e"
+        }
       }
+    },
+    "roles": {
+      "root": {
+        "keyids": [
+          "cb3fbd83df4ba2471a736b065650878280964a98843ec13b457a99b2a21cc3b4"
+        ],
+        "threshold": 1
+      },
+      "snapshot": {
+        "keyids": [
+          "66676daa73bdfb4804b56070c8927ae491e2a6c2314f05b854dea94de8ff6bfc"
+        ],
+        "threshold": 1
+      },
+      "targets": {
+        "keyids": [
+          "135c2f50e57ff11e744d234a62cebad8c38daf399604a7655661cc9199c69164"
+        ],
+        "threshold": 1
+      },
+      "timestamp": {
+        "keyids": [
+          "1bf1c6e3cdd3d3a8420b19199e27511999850f4b376c4547b2f32fba7e80fca3"
+        ],
+        "threshold": 1
+      }
+    },
+    "version": 1
+  }
+}
+</pre>
 
 ## File formats: snapshot.json ## {#snapshot.json}
 
-   The snapshot.json file is signed by the snapshot role. It MUST list the
-   version numbers of the top-level targets metadata and all delegated targets
-   metadata. It MAY also list their lengths and file hashes.
+The snapshot.json file is signed by the snapshot role. It MUST list the
+version numbers of the top-level targets metadata and all delegated targets
+metadata. It MAY also list their lengths and file hashes.
 
-   The "signed" portion of snapshot.json is as follows:
+The "signed" portion of snapshot.json is as follows:
 
-       { "_type" : "snapshot",
-         "spec_version" : SPEC_VERSION,
-         "version" : VERSION,
-         "expires" : EXPIRES,
-         "meta" : METAFILES
-       }
+<pre highlight="json">
+{
+  "_type" : "snapshot",
+  "spec_version" : SPEC_VERSION,
+  "version" : VERSION,
+  "expires" : EXPIRES,
+  "meta" : METAFILES
+}
+</pre>
 
-   SPEC_VERSION, VERSION and EXPIRES are the same as is described for the root.json file.
+SPEC_VERSION, VERSION and EXPIRES are the same as is described for the root.json file.
 
-   METAFILES is an object whose format is the following:
+METAFILES is an object whose format is the following:
 
-       { METAPATH : {
-             "version" : VERSION,
-             ("length" : LENGTH, |
-              "hashes" : HASHES) }
-         , ...
-       }
+<pre highlight="json">
+{
+  METAPATH : {
+    "version" : VERSION,
+    ("length" : LENGTH, |
+      "hashes" : HASHES)
+  },
+  ...
+}
+</pre>
 
-   METAPATH is the file path of the metadata on the repository relative to the
-   metadata base URL. For snapshot.json, these are top-level targets metadata
-   and delegated targets metadata.
+where:
 
-   VERSION is the integer version number as shown in the metadata file at
-   METAPATH.
+  : METAPATH
+  ::
+    the file path of the metadata on the repository relative to the
+    metadata base URL. For snapshot.json, these are top-level targets metadata
+    and delegated targets metadata.
 
-   LENGTH is the integer length in bytes of the metadata file at METAPATH. It
-   is OPTIONAL and can be omitted to reduce the snapshot metadata file size. In
-   that case the client MUST use a custom download limit for the listed
-   metadata.
+  : VERSION
+  ::
+    the integer version number as shown in the metadata file at METAPATH.
 
-   HASHES is a dictionary that specifies one or more hashes of the metadata
-   file at METAPATH, including their cryptographic hash function. For example:
-   { "sha256": HASH, ... }. HASHES is OPTIONAL and can be omitted to reduce
-   the snapshot metadata file size.  In that case the repository MUST guarantee
-   that VERSION alone unambiguously identifies the metadata at METAPATH.
+  : LENGTH
+  ::
+    the integer length in bytes of the metadata file at METAPATH. It
+    is OPTIONAL and can be omitted to reduce the snapshot metadata file size. In
+    that case the client MUST use a custom download limit for the listed
+    metadata.
 
-   A snapshot.json example file:
+  : HASHES
+  ::
+    a dictionary that specifies one or more hashes of the metadata
+    file at METAPATH, including their cryptographic hash function. For example:
+    { "sha256": HASH, ... }. HASHES is OPTIONAL and can be omitted to reduce
+    the snapshot metadata file size.  In that case the repository MUST guarantee
+    that VERSION alone unambiguously identifies the metadata at METAPATH.
 
-       { "signatures": [
-         {
-          "keyid": "66676daa73bdfb4804b56070c8927ae491e2a6c2314f05b854dea94de8ff6bfc",
-          "sig": "f7f03b13e3f4a78a23561419fc0dd741a637e49ee671251be9f8f3fceedfc112e4
-                  4ee3aaff2278fad9164ab039118d4dc53f22f94900dae9a147aa4d35dcfc0f"
-         }
-        ],
-        "signed": {
-         "_type": "snapshot",
-         "spec_version": "1.0.0",
-         "expires": "2030-01-01T00:00:00Z",
-         "meta": {
-          "targets.json": {
-           "version": 1
-          },
-          "project1.json": {
-           "version": 1,
-           "hashes": {
-            "sha256": "f592d072e1193688a686267e8e10d7257b4ebfcf28133350dae88362d82a0c8a"
-           }
-          },
-          "project2.json": {
-           "version": 1,
-           "length": 604,
-           "hashes": {
-            "sha256": "1f812e378264c3085bb69ec5f6663ed21e5882bbece3c3f8a0e8479f205ffb91"
-           }
-          }
-         },
-         "version": 1
+A snapshot.json example file:
+
+<pre highlight="json">
+{
+  "signatures": [
+    {
+      "keyid": "66676daa73bdfb4804b56070c8927ae491e2a6c2314f05b854dea94de8ff6bfc",
+      "sig": "f7f03b13e3f4a78a23561419fc0dd741a637e49ee671251be9f8f3fceedfc112e4
+      4ee3aaff2278fad9164ab039118d4dc53f22f94900dae9a147aa4d35dcfc0f"
+    }
+  ],
+  "signed": {
+    "_type": "snapshot",
+    "spec_version": "1.0.0",
+    "expires": "2030-01-01T00:00:00Z",
+    "meta": {
+      "targets.json": {
+        "version": 1
+      },
+      "project1.json": {
+        "version": 1,
+        "hashes": {
+          "sha256": "f592d072e1193688a686267e8e10d7257b4ebfcf28133350dae88362d82a0c8a"
         }
-       }
+      },
+      "project2.json": {
+        "version": 1,
+        "length": 604,
+        "hashes": {
+          "sha256": "1f812e378264c3085bb69ec5f6663ed21e5882bbece3c3f8a0e8479f205ffb91"
+        }
+      }
+    },
+    "version": 1
+  }
+}
+</pre>
 
 ## File formats: targets.json and delegated target roles ## {#targets.json}
 
-   The "signed" portion of targets.json is as follows:
+The "signed" portion of targets.json is as follows:
 
-       { "_type" : "targets",
-         "spec_version" : SPEC_VERSION,
-         "version" : VERSION,
-         "expires" : EXPIRES,
-         "targets" : TARGETS,
-         ("delegations" : DELEGATIONS)
-       }
+<pre highlight="json">
+{
+  "_type" : "targets",
+  "spec_version" : SPEC_VERSION,
+  "version" : VERSION,
+  "expires" : EXPIRES,
+  "targets" : TARGETS,
+  ("delegations" : DELEGATIONS)
+}
+</pre>
 
-   SPEC_VERSION, VERSION and EXPIRES are the same as is described for the root.json file.
+SPEC_VERSION, VERSION and EXPIRES are the same as is described for the root.json file.
 
-   TARGETS is an object whose format is the following:
+TARGETS is an object whose format is the following:
 
-       { TARGETPATH : {
-             "length" : LENGTH,
-             "hashes" : HASHES,
-             ("custom" : { ... }) }
-         , ...
-       }
+<pre highlight="json">
+{
+  TARGETPATH : {
+    "length" : LENGTH,
+    "hashes" : HASHES,
+    ("custom" : { ... })
+  },
+  ...
+}
+</pre>
 
-   Each key of the TARGETS object is a TARGETPATH.  A TARGETPATH is a path to
-   a file that is relative to a mirror's base URL of targets. To avoid
-   surprising behavior when resolving paths, it is RECOMMENDED that a
-   TARGETPATH uses the forward slash (/) as directory separator and does not
-   start with a directory separator. The recommendation for TARGETPATH aligns
-   with the ["path-relative-URL string"
-   definition](https://url.spec.whatwg.org/#path-relative-url-string) in the
-   WHATWG URL specification.
+where:
 
-   It is allowed to have a TARGETS object with no TARGETPATH elements.  This
-   can be used to indicate that no target files are available.
+  : TARGETS
+  ::
+    Each key of the TARGETS object is a TARGETPATH.
 
-   LENGTH is the integer length in bytes of the target file at TARGETPATH.
+  : TARGETPATH
+  ::
+    a path to a file that is relative to a mirror's base URL of targets. To avoid
+    surprising behavior when resolving paths, it is RECOMMENDED that a
+    TARGETPATH uses the forward slash (/) as directory separator and does not
+    start with a directory separator. The recommendation for TARGETPATH aligns
+    with the ["path-relative-URL string"
+    definition](https://url.spec.whatwg.org/#path-relative-url-string) in the
+    WHATWG URL specification.
 
-   HASHES is a dictionary that specifies one or more hashes, including the
-   cryptographic hash function.  For example: { "sha256": HASH, ... }. HASH is
-   the hexdigest of the cryptographic function computed on the target file.
+    It is allowed to have a TARGETS object with no TARGETPATH elements.  This
+    can be used to indicate that no target files are available.
 
-   If defined, the elements and values of "custom" will be made available to the
-   client application.  The information in "custom" is opaque to the framework
-   and can include version numbers, dependencies, requirements, and any other
-   data that the application wants to include to describe the file at
-   TARGETPATH.  The application may use this information to guide download
-   decisions.
+  : LENGTH
+  ::
+    is the integer length in bytes of the target file at TARGETPATH.
 
-   DELEGATIONS is an object whose format is the following:
+  : HASHES
+  ::
+    a dictionary that specifies one or more hashes, including the
+    cryptographic hash function.  For example: { "sha256": HASH, ... }. HASH is
+    the hexdigest of the cryptographic function computed on the target file.
 
-       { "keys" : {
-             KEYID : KEY,
-             ... },
-         "roles" : [{
-             "name": ROLENAME,
-             "keyids" : [ KEYID, ... ] ,
-             "threshold" : THRESHOLD,
-             ("path_hash_prefixes" : [ HEX_DIGEST, ... ] |
-              "paths" : [ PATHPATTERN, ... ]),
-             "terminating": TERMINATING,
-         }, ... ]
-       }
+  : "custom"
+  ::
+    If defined, the elements and values of "custom" will be made available to the
+    client application.  The information in "custom" is opaque to the framework
+    and can include version numbers, dependencies, requirements, and any other
+    data that the application wants to include to describe the file at
+    TARGETPATH.  The application may use this information to guide download
+    decisions.
 
-   "keys" lists the public keys to verify signatures of delegated targets roles.
-   Revocation and replacement of delegated targets roles keys is done by
-   changing the keys in this field in the delegating role's metadata.
+DELEGATIONS is an object whose format is the following:
 
-   ROLENAME is the name of the delegated role.  For example,
-   "projects".
+<pre highlight="json">
+{
+  "keys" : {
+    KEYID : KEY,
+    ...
+  },
+  "roles" : [
+    {
+      "name": ROLENAME,
+      "keyids" : [ KEYID, ... ] ,
+      "threshold" : THRESHOLD,
+      ("path_hash_prefixes" : [ HEX_DIGEST, ... ] |
+        "paths" : [ PATHPATTERN, ... ]),
+        "terminating": TERMINATING,
+    },
+    ... 
+  ]
+}
+</pre>
 
-   TERMINATING is a boolean indicating whether subsequent delegations should be
-   considered.
+where:
 
-   As explained in the [Diplomat
-   paper](https://github.com/theupdateframework/tuf/blob/develop/docs/papers/protect-community-repositories-nsdi2016.pdf),
-   terminating delegations instruct the client not to consider future trust
-   statements that match the delegation's pattern, which stops the delegation
-   processing once this delegation (and its descendants) have been processed.
-   A terminating delegation for a package causes any further statements about a
-   package that are not made by the delegated party or its descendants to be
-   ignored.
+  : "keys"
+  ::
+    lists the public keys to verify signatures of delegated targets roles.
+    Revocation and replacement of delegated targets roles keys is done by
+    changing the keys in this field in the delegating role's metadata.
 
-   In order to discuss target paths, a role MUST specify only one of the
-   "path_hash_prefixes" or "paths" attributes, each of which we discuss next.
+  : ROLENAME
+  ::
+    the name of the delegated role.  For example, "projects".
 
-   The "path_hash_prefixes" list is used to succinctly describe a set of target
-   paths. Specifically, each HEX_DIGEST in "path_hash_prefixes" describes a set
-   of target paths; therefore, "path_hash_prefixes" is the union over each
-   prefix of its set of target paths. The target paths must meet this
-   condition: each target path, when hashed with the SHA-256 hash function to
-   produce a 64-byte hexadecimal digest (HEX_DIGEST), must share the same
-   prefix as one of the prefixes in "path_hash_prefixes". This is useful to
-   split a large number of targets into separate bins identified by consistent
-   hashing.
+  : TERMINATING
+  ::
+    a boolean indicating whether subsequent delegations should be considered.
 
-   The "paths" list describes paths that the role is trusted to provide.
-   Clients MUST check that a target is in one of the trusted paths of all roles
-   in a delegation chain, not just in a trusted path of the role that describes
-   the target file.  PATHPATTERN can include shell-style wildcards and supports
-   the Unix filename pattern matching convention.  Its format may either
-   indicate a path to a single file, or to multiple paths with the use of
-   shell-style wildcards.  For example, the path pattern "targets/*.tgz" would
-   match file paths "targets/foo.tgz" and "targets/bar.tgz", but not
-   "targets/foo.txt".  Likewise, path pattern "foo-version-?.tgz" matches
-   "foo-version-2.tgz" and "foo-version-a.tgz", but not "foo-version-alpha.tgz".
-   To avoid surprising behavior when matching targets with PATHPATTERN, it is
-   RECOMMENDED that PATHPATTERN uses the forward slash (/) as directory
-   separator and does not start with a directory separator, akin to
-   TARGETSPATH.
+    As explained in the [Diplomat
+    paper](https://github.com/theupdateframework/tuf/blob/develop/docs/papers/protect-community-repositories-nsdi2016.pdf),
+    terminating delegations instruct the client not to consider future trust
+    statements that match the delegation's pattern, which stops the delegation
+    processing once this delegation (and its descendants) have been processed.
+    A terminating delegation for a package causes any further statements about a
+    package that are not made by the delegated party or its descendants to be
+    ignored.
+
+In order to discuss target paths, a role MUST specify only one of the
+"path_hash_prefixes" or "paths" attributes, each of which we discuss next.
+
+  : "path_hash_prefixes"
+  ::
+    The "path_hash_prefixes" list is used to succinctly describe a set of target
+    paths. Specifically, each HEX_DIGEST in "path_hash_prefixes" describes a set
+    of target paths; therefore, "path_hash_prefixes" is the union over each
+    prefix of its set of target paths. The target paths must meet this
+    condition: each target path, when hashed with the SHA-256 hash function to
+    produce a 64-byte hexadecimal digest (HEX_DIGEST), must share the same
+    prefix as one of the prefixes in "path_hash_prefixes". This is useful to
+    split a large number of targets into separate bins identified by consistent
+    hashing.
+
+  : "paths"
+  ::
+    The "paths" list describes paths that the role is trusted to provide.
+    Clients MUST check that a target is in one of the trusted paths of all roles
+    in a delegation chain, not just in a trusted path of the role that describes
+    the target file.  PATHPATTERN can include shell-style wildcards and supports
+    the Unix filename pattern matching convention.  Its format may either
+    indicate a path to a single file, or to multiple paths with the use of
+    shell-style wildcards.  For example, the path pattern "targets/*.tgz" would
+    match file paths "targets/foo.tgz" and "targets/bar.tgz", but not
+    "targets/foo.txt".  Likewise, path pattern "foo-version-?.tgz" matches
+    "foo-version-2.tgz" and "foo-version-a.tgz", but not "foo-version-alpha.tgz".
+    To avoid surprising behavior when matching targets with PATHPATTERN, it is
+    RECOMMENDED that PATHPATTERN uses the forward slash (/) as directory
+    separator and does not start with a directory separator, akin to
+    TARGETSPATH.
 
 
-   Prioritized delegations allow clients to resolve conflicts between delegated
-   roles that share responsibility for overlapping target paths.  To resolve
-   conflicts, clients must consider metadata in order of appearance of delegations;
-   we treat the order of delegations such that the first delegation is trusted
-   over the second one, the second delegation is trusted more than the third
-   one, and so on. Likewise, the metadata of the first delegation will override that
-   of the second delegation, the metadata of the second delegation will override
-   that of the third one, etc. In order to accommodate prioritized
-   delegations, the "roles" key in the DELEGATIONS object above points to an array
-   of delegated roles, rather than to a hash table.
+Prioritized delegations allow clients to resolve conflicts between delegated
+roles that share responsibility for overlapping target paths.  To resolve
+conflicts, clients must consider metadata in order of appearance of delegations;
+we treat the order of delegations such that the first delegation is trusted
+over the second one, the second delegation is trusted more than the third
+one, and so on. Likewise, the metadata of the first delegation will override that
+of the second delegation, the metadata of the second delegation will override
+that of the third one, etc. In order to accommodate prioritized
+delegations, the "roles" key in the DELEGATIONS object above points to an array
+of delegated roles, rather than to a hash table.
 
-   The metadata files for delegated target roles has the same format as the
-   top-level targets.json metadata file.
+The metadata files for delegated target roles has the same format as the
+top-level targets.json metadata file.
 
-   A targets.json example file:
+A targets.json example file:
 
-       {
-       "signatures": [
-        {
-         "keyid": "135c2f50e57ff11e744d234a62cebad8c38daf399604a7655661cc9199c69164",
-         "sig": "e9fd40008fba263758a3ff1dc59f93e42a4910a282749af915fbbea1401178e5a0
-                 12090c228f06db1deb75ad8ddd7e40635ac51d4b04301fce0fd720074e0209"
-        }
-       ],
-       "signed": {
-        "_type": "targets",
-        "spec_version": "1.0.0",
-        "delegations": {
-         "keys": {
-          "f761033eb880143c52358d941d987ca5577675090e2215e856ba0099bc0ce4f6": {
-           "keytype": "ed25519",
-           "scheme": "ed25519",
-           "keyval": {
+<pre highlight="json">
+{
+  "signatures": [
+    {
+      "keyid": "135c2f50e57ff11e744d234a62cebad8c38daf399604a7655661cc9199c69164",
+      "sig": "e9fd40008fba263758a3ff1dc59f93e42a4910a282749af915fbbea1401178e5a0
+      12090c228f06db1deb75ad8ddd7e40635ac51d4b04301fce0fd720074e0209"
+    }
+  ],
+  "signed": {
+    "_type": "targets",
+    "spec_version": "1.0.0",
+    "delegations": {
+      "keys": {
+        "f761033eb880143c52358d941d987ca5577675090e2215e856ba0099bc0ce4f6": {
+          "keytype": "ed25519",
+          "scheme": "ed25519",
+          "keyval": {
             "public": "b6e40fb71a6041212a3d84331336ecaa1f48a0c523f80ccc762a034c727606fa"
-           }
           }
-         },
-         "roles": [
-          {
-           "keyids": [
-            "f761033eb880143c52358d941d987ca5577675090e2215e856ba0099bc0ce4f6"
-           ],
-           "name": "project",
-           "paths": [
-            "project/file3.txt"
-           ],
-           "threshold": 1
-          }
-         ]
-        },
-        "expires": "2030-01-01T00:00:00Z",
-        "targets": {
-         "file1.txt": {
-          "hashes": {
-           "sha256": "65b8c67f51c993d898250f40aa57a317d854900b3a04895464313e48785440da"
-          },
-          "length": 31
-         },
-         "dir/file2.txt": {
-          "hashes": {
-           "sha256": "452ce8308500d83ef44248d8e6062359211992fd837ea9e370e561efb1a4ca99"
-          },
-          "length": 39
-         }
-        },
-        "version": 1
         }
-       }
+      },
+      "roles": [
+        {
+          "keyids": [
+            "f761033eb880143c52358d941d987ca5577675090e2215e856ba0099bc0ce4f6"
+          ],
+          "name": "project",
+          "paths": [
+            "project/file3.txt"
+          ],
+          "threshold": 1
+        }
+      ]
+    },
+    "expires": "2030-01-01T00:00:00Z",
+    "targets": {
+      "file1.txt": {
+        "hashes": {
+          "sha256": "65b8c67f51c993d898250f40aa57a317d854900b3a04895464313e48785440da"
+        },
+        "length": 31
+      },
+      "dir/file2.txt": {
+        "hashes": {
+          "sha256": "452ce8308500d83ef44248d8e6062359211992fd837ea9e370e561efb1a4ca99"
+        },
+        "length": 39
+      }
+    },
+    "version": 1
+  }
+}
+</pre>
 
 ## File formats: timestamp.json ## {#timestamp.json}
 
-   The timestamp file is signed by a timestamp key.  It indicates the latest
-   version of the snapshot metadata and is frequently re-signed to limit the
-   amount of time a client can be kept unaware of interference with obtaining
-   updates.
+The timestamp file is signed by a timestamp key.  It indicates the latest
+version of the snapshot metadata and is frequently re-signed to limit the
+amount of time a client can be kept unaware of interference with obtaining
+updates.
 
-   Timestamp files will potentially be downloaded very frequently.  Unnecessary
-   information in them will be avoided.
+Timestamp files will potentially be downloaded very frequently.  Unnecessary
+information in them will be avoided.
 
-   The "signed" portion of timestamp.json is as follows:
+The "signed" portion of timestamp.json is as follows:
 
-       { "_type" : "timestamp",
-         "spec_version" : SPEC_VERSION,
-         "version" : VERSION,
-         "expires" : EXPIRES,
-         "meta" : METAFILES
-       }
+<pre highlight="json">
+{
+  "_type" : "timestamp",
+  "spec_version" : SPEC_VERSION,
+  "version" : VERSION,
+  "expires" : EXPIRES,
+  "meta" : METAFILES
+}
+</pre>
 
-   SPEC_VERSION, VERSION and EXPIRES are the same as is described for the root.json file.
+SPEC_VERSION, VERSION and EXPIRES are the same as is described for the root.json file.
 
-   METAFILES is the same as described for the snapshot.json file.  In the case
-   of the timestamp.json file, this MUST only include a description of the
-   snapshot.json file.
+  : METAFILES
+  ::
+    the same as described for the snapshot.json file.  In the case
+    of the timestamp.json file, this MUST only include a description of the
+    snapshot.json file.
 
-   A signed timestamp.json example file:
+A signed timestamp.json example file:
 
-       {
-       "signatures": [
-        {
-         "keyid": "1bf1c6e3cdd3d3a8420b19199e27511999850f4b376c4547b2f32fba7e80fca3",
-         "sig": "90d2a06c7a6c2a6a93a9f5771eb2e5ce0c93dd580bebc2080d10894623cfd6eaed
-                 f4df84891d5aa37ace3ae3736a698e082e12c300dfe5aee92ea33a8f461f02"
-        }
-       ],
-       "signed": {
-        "_type": "timestamp",
-        "spec_version": "1.0.0",
-        "expires": "2030-01-01T00:00:00Z",
-        "meta": {
-         "snapshot.json": {
-          "hashes": {
-           "sha256": "c14aeb4ac9f4a8fc0d83d12482b9197452f6adf3eb710e3b1e2b79e8d14cb681"
-          },
-          "length": 1007,
-          "version": 1
-         }
+<pre highlight="json">
+{
+  "signatures": [
+    {
+      "keyid": "1bf1c6e3cdd3d3a8420b19199e27511999850f4b376c4547b2f32fba7e80fca3",
+      "sig": "90d2a06c7a6c2a6a93a9f5771eb2e5ce0c93dd580bebc2080d10894623cfd6eaed
+      f4df84891d5aa37ace3ae3736a698e082e12c300dfe5aee92ea33a8f461f02"
+    }
+  ],
+  "signed": {
+    "_type": "timestamp",
+    "spec_version": "1.0.0",
+    "expires": "2030-01-01T00:00:00Z",
+    "meta": {
+      "snapshot.json": {
+        "hashes": {
+          "sha256": "c14aeb4ac9f4a8fc0d83d12482b9197452f6adf3eb710e3b1e2b79e8d14cb681"
         },
+        "length": 1007,
         "version": 1
-        }
-       }
+      }
+    },
+    "version": 1
+  }
+}
+</pre>
 
 ## File formats: mirrors.json ## {#mirrors.json}
 
-   The mirrors.json file is signed by the mirrors role.  It indicates which
-   mirrors are active and believed to be mirroring specific parts of the
-   repository.
+The mirrors.json file is signed by the mirrors role.  It indicates which
+mirrors are active and believed to be mirroring specific parts of the
+repository.
 
-   The "signed" portion of mirrors.json is as follows:
+The "signed" portion of mirrors.json is as follows:
 
+<pre highlight="json">
+{
+  "_type" : "mirrors",
+  "spec_version" : SPEC_VERSION,
+  "version" : VERSION,
+  "expires" : EXPIRES,
+  "mirrors" : [
+    {
+      "urlbase" : URLBASE,
+      "metapath" : METAPATH,
+      "targetspath" : TARGETSPATH,
+      "metacontent" : [ PATHPATTERN ... ] ,
+      "targetscontent" : [ PATHPATTERN ... ] ,
+      ("custom" : { ... })
+    },
+    ... 
+  ]
+}
+</pre>
 
-      { "_type" : "mirrors",
-       "spec_version" : SPEC_VERSION,
-       "version" : VERSION,
-       "expires" : EXPIRES,
-       "mirrors" : [
-          { "urlbase" : URLBASE,
-            "metapath" : METAPATH,
-            "targetspath" : TARGETSPATH,
-            "metacontent" : [ PATHPATTERN ... ] ,
-            "targetscontent" : [ PATHPATTERN ... ] ,
-            ("custom" : { ... }) }
-          , ... ]
-      }
+  : URLBASE
+  ::
+    the URL of the mirror which METAPATH and TARGETSPATH are relative
+    to.  All metadata files will be retrieved from METAPATH and all target files
+    will be retrieved from TARGETSPATH.
 
-   URLBASE is the URL of the mirror which METAPATH and TARGETSPATH are relative
-   to.  All metadata files will be retrieved from METAPATH and all target files
-   will be retrieved from TARGETSPATH.
+  : PATHPATTERN
+  ::
+    The lists of PATHPATTERN for "metacontent" and "targetscontent" describe the
+    metadata files and target files available from the mirror.
 
-   The lists of PATHPATTERN for "metacontent" and "targetscontent" describe the
-   metadata files and target files available from the mirror.
-
-   The order of the list of mirrors is important.  For any file to be
-   downloaded, whether it is a metadata file or a target file, the framework on
-   the client will give priority to the mirrors that are listed first.  That is,
-   the first mirror in the list whose "metacontent" or "targetscontent" include
-   a path that indicate the desired file can be found there will the first
-   mirror that will be used to download that file.  Successive mirrors with
-   matching paths will only be tried if downloading from earlier mirrors fails.
-   This behavior can be modified by the client code that uses the framework to,
-   for example, randomly select from the listed mirrors.
+The order of the list of mirrors is important.  For any file to be
+downloaded, whether it is a metadata file or a target file, the framework on
+the client will give priority to the mirrors that are listed first.  That is,
+the first mirror in the list whose "metacontent" or "targetscontent" include
+a path that indicate the desired file can be found there will the first
+mirror that will be used to download that file.  Successive mirrors with
+matching paths will only be tried if downloading from earlier mirrors fails.
+This behavior can be modified by the client code that uses the framework to,
+for example, randomly select from the listed mirrors.
 
 # Detailed Workflows # {#detailed-workflows}
 
