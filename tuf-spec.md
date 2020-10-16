@@ -285,7 +285,7 @@ There is also one optional top-level role:
 All roles can use one or more keys and require a threshold of signatures of
 the role's keys in order to trust a given metadata file.
 
-### Root Role ### {#root-role}
+### Root Role ### {#root}
 
   + The root role delegates trust to specific keys trusted for all other
     top-level roles used in the system.
@@ -306,7 +306,7 @@ the role's keys in order to trust a given metadata file.
     important because safely recovering from it is nearly impossible.
 
 
-### Targets role ### {#targets-role}
+### Targets role ### {#targets}
 
 The targets role's signature indicates which target files are trusted by
 clients.  The targets role signs metadata that describes these files, not
@@ -328,7 +328,7 @@ a role does not become untrusted when it has delegated trust.
 Any delegation can be revoked at any time: the delegating role needs only
 to sign new metadata that no longer contains that delegation.
 
-### Snapshot role ### {#snapshot-role}
+### Snapshot role ### {#snapshot}
 
 The snapshot role signs a metadata file that provides information about
 the latest version of all targets metadata on the repository
@@ -336,7 +336,7 @@ the latest version of all targets metadata on the repository
 clients to know which metadata files have been updated and also prevents
 mix-and-match attacks.
 
-### Timestamp role ### {#timestamp-role}
+### Timestamp role ### {#timestamp}
 
 To prevent an adversary from replaying an out-of-date signed metadata file
 whose signature has not yet expired, an automated process periodically signs
@@ -344,7 +344,7 @@ a timestamped statement containing the hash of the snapshot file.  Even
 though this timestamp key must be kept online, the risk posed to clients by
 the compromise of this key is minimal.
 
-### Mirrors role ### {#mirrors-role}
+### Mirrors role ### {#mirrors}
 
 Every repository has one or more mirrors from which files can be downloaded
 by clients.  A software update system using the framework may choose to
@@ -496,9 +496,9 @@ All signed metadata objects have the format:
 
 <pre highlight="json">
 {
-  "signed" : <a>ROLE</a>,
+  "signed" : <a for="role">ROLE</a>,
   "signatures" : [
-    { "keyid" : <a>KEYID</a>,
+    { "keyid" : <a for="role">KEYID</a>,
       "sig" : <a>SIGNATURE</a> }
       ,
       ...
@@ -510,11 +510,11 @@ All signed metadata objects have the format:
 
 where:
 
-  : <dfn>ROLE</dfn>
+  : <dfn for="role">ROLE</dfn>
   ::
     a dictionary whose "_type" field describes the role type.
 
-  : <dfn>KEYID</dfn>
+  : <dfn for="role">KEYID</dfn>
   ::
     the identifier of the key signing the ROLE dictionary.
 
@@ -630,8 +630,8 @@ where:
   ::
     PEM format and a string.
 
-The <a>KEYID</a> of a key is the hexdigest of the SHA-256 hash of the
-canonical form of the key.
+The <a for="role">KEYID</a> of a key is the hexdigest of the SHA-256 hash of
+the canonical form of the key.
 
 Metadata date-time data follows the ISO 8601 standard.  The expected format
 of the combined date and time string is "YYYY-MM-DDTHH:MM:SSZ".  Time is
@@ -652,24 +652,30 @@ The "signed" portion of root.json is as follows:
 <pre highlight="json">
 {
   "_type" : "root",
-  "spec_version" : SPEC_VERSION,
-  "consistent_snapshot": CONSISTENT_SNAPSHOT,
-  "version" : VERSION,
-  "expires" : EXPIRES,
+  "spec_version" : <a>SPEC_VERSION</a>,
+  "consistent_snapshot": <a>CONSISTENT_SNAPSHOT</a>,
+  "version" : <a>VERSION</a>,
+  "expires" : <a>EXPIRES</a>,
   "keys" : {
-    KEYID : KEY
-    , ... },
-    "roles" : {
-      ROLE : {
-        "keyids" : [ KEYID, ... ] ,
-        "threshold" : THRESHOLD }
-        , ... }
+    <a for="root">KEYID</a> : <a>KEY</a>,
+    ...
+  },
+  "roles" : {
+    <a for="root">ROLE</a> : {
+      "keyids" : [
+        <a for="root">KEYID</a>,
+        ...
+      ],
+      "threshold" : <a>THRESHOLD</a>
+    },
+    ...
+  }
 }
 </pre>
 
 where:
 
-  : SPEC_VERSION
+  : <dfn>SPEC_VERSION</dfn>
   ::
     is a string that contains the version number of the TUF
     specification. Its format follows the [Semantic Versioning 2.0.0
@@ -679,23 +685,23 @@ where:
     Adopters are free to determine what is considered a match (e.g., the version
     number exactly, or perhaps only the major version number (major.minor.fix).
 
-  : CONSISTENT_SNAPSHOT
+  : <dfn>CONSISTENT_SNAPSHOT</dfn>
   ::
     a boolean indicating whether the repository supports
      consistent snapshots.  Section 7 goes into more detail on the consequences
      of enabling this setting on a repository.
 
-  : VERSION
+  : <dfn>VERSION</dfn>
   ::
     an integer that is greater than 0.  Clients MUST NOT replace a
     metadata file with a version number less than the one currently trusted.
 
-  : EXPIRES
+  : <dfn>EXPIRES</dfn>
   ::
     determines when metadata should be considered expired and no longer
     trusted by clients.  Clients MUST NOT trust an expired file.
 
-  : ROLE
+  : <dfn for="root">ROLE</dfn>
   ::
     one of "root", "snapshot", "targets", "timestamp", or "mirrors".
     A role for each of "root", "snapshot", "timestamp", and "targets" MUST be
@@ -703,14 +709,14 @@ where:
     specified, the mirror list will not need to be signed if mirror lists are
     being used.
 
-  : KEYID
+  : <dfn for="root">KEYID</dfn>
   ::
     The KEYID MUST be correct for the specified KEY.  Clients MUST calculate
     each KEYID to verify this is correct for the associated key.  Clients MUST
     ensure that for any KEYID represented in this key list and in other files,
     only one unique key has that KEYID.
 
-  : THRESHOLD
+  : <dfn>THRESHOLD</dfn>
   ::
     The THRESHOLD for a role is an integer of the number of keys of that role
     whose signatures are required in order to consider a file as being properly
