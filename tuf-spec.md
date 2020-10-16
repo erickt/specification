@@ -496,25 +496,29 @@ All signed metadata objects have the format:
 
 <pre highlight="json">
 {
-  "signed" : ROLE,
+  "signed" : <a>ROLE</a>,
   "signatures" : [
-    { "keyid" : KEYID,
-      "sig" : SIGNATURE }
-      , ... ]
+    { "keyid" : <a>KEYID</a>,
+      "sig" : <a>SIGNATURE</a> }
+      ,
+      ...
+    },
+    ...
+  ]
 }
 </pre>
 
 where:
 
-  : ROLE
+  : <dfn>ROLE</dfn>
   ::
     a dictionary whose "_type" field describes the role type.
 
-  : KEYID
+  : <dfn>KEYID</dfn>
   ::
     the identifier of the key signing the ROLE dictionary.
 
-  : SIGNATURE
+  : <dfn>SIGNATURE</dfn>
   ::
     a hex-encoded signature of the canonical form of the metadata for ROLE.
 
@@ -523,24 +527,27 @@ All keys have the format:
 
 <pre highlight="json">
 {
-  "keytype" : KEYTYPE,
-  "scheme" : SCHEME,
-  "keyval" : KEYVAL
+  "keytype" : <a>KEYTYPE</a>,
+  "scheme" : <a>SCHEME</a>,
+  "keyval" : <a>KEYVAL</a>
 }
 </pre>
 
 where:
 
-  : KEYTYPE
+  : <dfn>KEYTYPE</dfn>
   ::
-    a string denoting a public key signature system, such as RSA or ECDSA.
+    a string denoting a public key signature system, such as <a
+    for="keytype">"rsa"</a>, <a for="keytype">"ed25519"</a>, or <a
+    for="keytype">"ecdsa-sha2-nistp256"</a>.
 
-  : SCHEME
+  : <dfn>SCHEME</dfn>
   ::
-    a string denoting a corresponding signature scheme.  For
-    example: "rsassa-pss-sha256" and "ecdsa-sha2-nistp256".
+    a string denoting a corresponding signature scheme.  For example: <a
+    for="scheme">"rsassa-pss-sha256"</a>, <a for="scheme">"ed25519"</a> and <a
+    for="scheme">"ecdsa-sha2-nistp256"</a>.
 
-  : KEYVAL
+  : <dfn>KEYVAL</dfn>
   ::
     a dictionary containing the public portion of the key.
 
@@ -548,75 +555,82 @@ The reference implementation defines three signature schemes, although TUF
 is not restricted to any particular signature scheme, key type, or
 cryptographic library:
 
-  : "rsassa-pss-sha256"
+  : <dfn for="scheme">"rsassa-pss-sha256"</dfn>
   ::
     RSA Probabilistic signature scheme with appendix.  The underlying hash
     function is SHA256. https://tools.ietf.org/html/rfc3447#page-29
 
-  : "ed25519"
+  : <dfn for="scheme">"ed25519"</dfn>
   ::
     Elliptic curve digital signature algorithm based on Twisted Edwards curves.
     https://ed25519.cr.yp.to/
 
-  : "ecdsa-sha2-nistp256"
+  : <dfn for="scheme">"ecdsa-sha2-nistp256"</dfn>
   ::
     Elliptic Curve Digital Signature Algorithm with NIST P-256 curve signing
     and SHA-256 hashing.
     https://en.wikipedia.org/wiki/Elliptic_Curve_Digital_Signature_Algorithm
 
-We define three keytypes below: 'rsa', "ed25519", and "ecdsa", but adopters
-can define and use any particular keytype, signing scheme, and cryptographic
-library.
+We define three keytypes below: <a for="keytype">"rsa"</a>, <a
+for="keytype">"ed25519"</a>, and <a for="keytype">"ecdsa-sha2-nistp256"</a>,
+but adopters can define and use any particular keytype, signing scheme, and
+cryptographic library.
 
-The "rsa" format is:
+The <dfn for="keytype">"rsa"</dfn> format is:
 
 <pre highlight="json">
 {
   "keytype" : "rsa",
-  "scheme" : "rsassa-pss-sha256",
-  "keyval" : {"public" : PUBLIC}
+  "scheme" : <a for="scheme">"rsassa-pss-sha256"</a>,
+  "keyval" : {
+    "public" : <a for="keyval-rsa">PUBLIC</a>
+  }
 }
 </pre>
 
 where:
 
-  : PUBLIC
+  : <dfn for="keyval-rsa">PUBLIC</dfn>
   ::
     PEM format and a string.  All RSA keys MUST be at least 2048 bits.
 
-The "ed25519" format is:
+The <dfn for="keytype">"ed25519"</dfn> format is:
 
 <pre highlight="json">
 {
   "keytype" : "ed25519",
-  "scheme" : "ed25519",
-  "keyval" : {"public" : PUBLIC}
+  "scheme" : <a for="scheme">"ed25519"</a>,
+  "keyval" : {
+    "public" : <a for="keyval-ed25519">PUBLIC</a>
+  }
 }
 </pre>
 
 where:
 
-  : PUBLIC
+  : <dfn for="keyval-ed25519">PUBLIC</dfn>
   ::
     a 64-byte hex encoded string.
 
-The "ecdsa" format is:
+The <dfn for="keytype">"ecdsa-sha2-nistp256"</dfn> format is:
 
 <pre highlight="json">
 {
   "keytype" : "ecdsa-sha2-nistp256",
-  "scheme" : "ecdsa-sha2-nistp256",
-  "keyval" : {"public" : PUBLIC}
+  "scheme" : "<a for="scheme">"ecdsa-sha2-nistp256"</a>,
+  "keyval" : {
+    "public" : <a for="keyval-ecdsa">PUBLIC</a>
+  }
 }
 </pre>
 
 where:
 
-  : PUBLIC
+  : <dfn for="keyval-ecdsa">PUBLIC</dfn>
   ::
     PEM format and a string.
 
-The KEYID of a key is the hexdigest of the SHA-256 hash of the
+The <a>KEYID</a> of a key is the hexdigest of the SHA-256 hash of the
 canonical form of the key.
 
 Metadata date-time data follows the ISO 8601 standard.  The expected format
