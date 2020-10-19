@@ -634,27 +634,27 @@ The <a for="role">KEYID</a> of a key is the hexdigest of the SHA-256 hash of
 the canonical form of the key.
 
 Metadata date-time data follows the ISO 8601 standard.  The expected format
-of the combined date and time string is "YYYY-MM-DDTHH:MM:SSZ".  Time is
+of the combined date and time string is `"YYYY-MM-DDTHH:MM:SSZ"`.  Time is
 always in UTC, and the "Z" time zone designator is attached to indicate a
-zero UTC offset.  An example date-time string is "1985-10-21T01:21:00Z".
+zero UTC offset.  An example date-time string is `"1985-10-21T01:21:00Z"`.
 
 
-## File formats: root.json ## {#root.json}
+## File formats: root.json ## {#format-root}
 
-The root.json file is signed by the root role's keys.  It indicates
+The <dfn>root.json</dfn> file is signed by the root role's keys.  It indicates
 which keys are authorized for all top-level roles, including the root
 role itself.  Revocation and replacement of top-level role keys, including
 for the root role, is done by changing the keys listed for the roles in
 this file.
 
-The "signed" portion of root.json is as follows:
+The "signed" portion of <a>root.json</a> is as follows:
 
 <pre highlight="json">
 {
   "_type" : "root",
   "spec_version" : <a>SPEC_VERSION</a>,
   "consistent_snapshot": <a>CONSISTENT_SNAPSHOT</a>,
-  "version" : <a>VERSION</a>,
+  "version" : <a for=role>VERSION</a>,
   "expires" : <a>EXPIRES</a>,
   "keys" : {
     <a for="root">KEYID</a> : <a>KEY</a>,
@@ -691,7 +691,7 @@ where:
      consistent snapshots.  Section 7 goes into more detail on the consequences
      of enabling this setting on a repository.
 
-  : <dfn>VERSION</dfn>
+  : <dfn for=role>VERSION</dfn>
   ::
     an integer that is greater than 0.  Clients MUST NOT replace a
     metadata file with a version number less than the one currently trusted.
@@ -722,7 +722,8 @@ where:
     whose signatures are required in order to consider a file as being properly
     signed by that role.
 
-A root.json example file:
+<div class=example id=root.json-example>
+A <a>root.json</a> example file:
 
 <pre highlight="json">
 {
@@ -798,11 +799,12 @@ A root.json example file:
   }
 }
 </pre>
+</div>
 
 ## File formats: snapshot.json ## {#snapshot.json}
 
-The snapshot.json file is signed by the snapshot role. It MUST list the
-version numbers of the top-level targets metadata and all delegated targets
+The <dfn>snapshot.json</dfn> file is signed by the snapshot role. It MUST list
+the version numbers of the top-level targets metadata and all delegated targets
 metadata. It MAY also list their lengths and file hashes.
 
 The "signed" portion of snapshot.json is as follows:
@@ -810,23 +812,24 @@ The "signed" portion of snapshot.json is as follows:
 <pre highlight="json">
 {
   "_type" : "snapshot",
-  "spec_version" : SPEC_VERSION,
-  "version" : VERSION,
-  "expires" : EXPIRES,
-  "meta" : METAFILES
+  "spec_version" : <a>SPEC_VERSION</a>,
+  "version" : <a for=role>VERSION</a>,
+  "expires" : <a>EXPIRES</a>,
+  "meta" : <a>METAFILES</a>
 }
 </pre>
 
-SPEC_VERSION, VERSION and EXPIRES are the same as is described for the root.json file.
+<a>SPEC_VERSION</a>, <a for=role>VERSION</a> and <a>EXPIRES</a> are the same as
+is described for the <a>root.json</a> file.
 
-METAFILES is an object whose format is the following:
+<dfn>METAFILES</dfn> is an object whose format is the following:
 
 <pre highlight="json">
 {
-  METAPATH : {
-    "version" : VERSION,
-    ("length" : LENGTH, |
-      "hashes" : HASHES)
+  <a>METAPATH</a> : {
+    "version" : <a for=metapath>VERSION</a>,
+    ("length" : <a>LENGTH</a>, |
+      "hashes" : <a>HASHES</a>)
   },
   ...
 }
@@ -834,24 +837,24 @@ METAFILES is an object whose format is the following:
 
 where:
 
-  : METAPATH
+  : <dfn>METAPATH</dfn>
   ::
     the file path of the metadata on the repository relative to the
     metadata base URL. For snapshot.json, these are top-level targets metadata
     and delegated targets metadata.
 
-  : VERSION
+  : <dfn for=metapath>VERSION</dfn>
   ::
-    the integer version number as shown in the metadata file at METAPATH.
+    the integer version number as shown in the metadata file at <a>METAPATH</a>.
 
-  : LENGTH
+  : <dfn>LENGTH</dfn>
   ::
     the integer length in bytes of the metadata file at METAPATH. It
     is OPTIONAL and can be omitted to reduce the snapshot metadata file size. In
     that case the client MUST use a custom download limit for the listed
     metadata.
 
-  : HASHES
+  : <dfn>HASHES</dfn>
   ::
     a dictionary that specifies one or more hashes of the metadata
     file at METAPATH, including their cryptographic hash function. For example:
@@ -859,7 +862,8 @@ where:
     the snapshot metadata file size.  In that case the repository MUST guarantee
     that VERSION alone unambiguously identifies the metadata at METAPATH.
 
-A snapshot.json example file:
+<div class=example id=example-snapshot.json>
+A `snapshot.json` example file:
 
 <pre highlight="json">
 {
@@ -896,6 +900,7 @@ A snapshot.json example file:
   }
 }
 </pre>
+</div>
 
 ## File formats: targets.json and delegated target roles ## {#targets.json}
 
