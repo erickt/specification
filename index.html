@@ -1322,7 +1322,7 @@ Possible extra rowspan handling
 	}
 </style>
   <meta content="Bikeshed version 89ebb6ab, updated Fri Oct 9 15:32:07 2020 -0700" name="generator">
-  <meta content="bcfb1e9585ee13e47271e87efe4ebb3402bef0d7" name="document-revision">
+  <meta content="7a43bd6f120377a4cfab0c65698c8f7c1819ccd1" name="document-revision">
 <style>/* style-autolinks */
 
 .css.css, .property.property, .descriptor.descriptor {
@@ -1871,7 +1871,7 @@ c-[il] { color: #000000 } /* Literal.Number.Integer.Long */
   <div class="head">
    <p data-fill-with="logo"></p>
    <h1 class="p-name no-ref" id="title">The Update Framework Specification</h1>
-   <h2 class="no-num no-toc no-ref heading settled" id="subtitle"><span class="content">A Collection of Interesting Ideas, <time class="dt-updated" datetime="2020-10-16">16 October 2020</time></span></h2>
+   <h2 class="no-num no-toc no-ref heading settled" id="subtitle"><span class="content">A Collection of Interesting Ideas, <time class="dt-updated" datetime="2020-10-19">19 October 2020</time></span></h2>
    <div data-fill-with="spec-metadata">
     <dl>
      <dt>Issue Tracking:
@@ -1940,7 +1940,7 @@ c-[il] { color: #000000 } /* Literal.Number.Integer.Long */
      <ol class="toc">
       <li><a href="#metaformat"><span class="secno">4.1</span> <span class="content">Metaformat</span></a>
       <li><a href="#file-format-general-principles"><span class="secno">4.2</span> <span class="content">File formats: general principles</span></a>
-      <li><a href="#root.json"><span class="secno">4.3</span> <span class="content">File formats: root.json</span></a>
+      <li><a href="#format-root"><span class="secno">4.3</span> <span class="content">File formats: root.json</span></a>
       <li><a href="#snapshot.json"><span class="secno">4.4</span> <span class="content">File formats: snapshot.json</span></a>
       <li><a href="#targets.json"><span class="secno">4.5</span> <span class="content">File formats: targets.json and delegated target roles</span></a>
       <li><a href="#timestamp.json"><span class="secno">4.6</span> <span class="content">File formats: timestamp.json</span></a>
@@ -2517,21 +2517,21 @@ cryptographic library.</p>
    <p>The <a data-link-type="dfn" href="#role-keyid" id="ref-for-role-keyid①">KEYID</a> of a key is the hexdigest of the SHA-256 hash of
 the canonical form of the key.</p>
    <p>Metadata date-time data follows the ISO 8601 standard.  The expected format
-of the combined date and time string is "YYYY-MM-DDTHH:MM:SSZ".  Time is
+of the combined date and time string is <code>"YYYY-MM-DDTHH:MM:SSZ"</code>.  Time is
 always in UTC, and the "Z" time zone designator is attached to indicate a
-zero UTC offset.  An example date-time string is "1985-10-21T01:21:00Z".</p>
-   <h3 class="heading settled" data-level="4.3" id="root.json"><span class="secno">4.3. </span><span class="content">File formats: root.json</span><a class="self-link" href="#root.json"></a></h3>
-   <p>The root.json file is signed by the root role’s keys.  It indicates
+zero UTC offset.  An example date-time string is <code>"1985-10-21T01:21:00Z"</code>.</p>
+   <h3 class="heading settled" data-level="4.3" id="format-root"><span class="secno">4.3. </span><span class="content">File formats: root.json</span><a class="self-link" href="#format-root"></a></h3>
+   <p>The <dfn class="dfn-paneled" data-dfn-type="dfn" data-noexport id="rootjson">root.json</dfn> file is signed by the root role’s keys.  It indicates
 which keys are authorized for all top-level roles, including the root
 role itself.  Revocation and replacement of top-level role keys, including
 for the root role, is done by changing the keys listed for the roles in
 this file.</p>
-   <p>The "signed" portion of root.json is as follows:</p>
+   <p>The "signed" portion of <a data-link-type="dfn" href="#rootjson" id="ref-for-rootjson">root.json</a> is as follows:</p>
 <pre class="highlight"><c- p>{</c->
   <c- f>"_type"</c-> <c- p>:</c-> <c- u>"root"</c-><c- p>,</c->
   <c- f>"spec_version"</c-> <c- p>:</c-> <a data-link-type="dfn" href="#spec_version" id="ref-for-spec_version">SPEC_VERSION</a><c- p>,</c->
   <c- f>"consistent_snapshot"</c-><c- p>:</c-> <a data-link-type="dfn" href="#consistent_snapshot" id="ref-for-consistent_snapshot">CONSISTENT_SNAPSHOT</a><c- p>,</c->
-  <c- f>"version"</c-> <c- p>:</c-> <a data-link-type="dfn" href="#version" id="ref-for-version">VERSION</a><c- p>,</c->
+  <c- f>"version"</c-> <c- p>:</c-> <a data-link-type="dfn" href="#role-version" id="ref-for-role-version">VERSION</a><c- p>,</c->
   <c- f>"expires"</c-> <c- p>:</c-> <a data-link-type="dfn" href="#expires" id="ref-for-expires">EXPIRES</a><c- p>,</c->
   <c- f>"keys"</c-> <c- p>:</c-> <c- p>{</c->
     <a data-link-type="dfn" href="#root-keyid" id="ref-for-root-keyid">KEYID</a> : <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#map-key" id="ref-for-map-key">KEY</a>,
@@ -2565,7 +2565,7 @@ number exactly, or perhaps only the major version number (major.minor.fix).</p>
      <p>a boolean indicating whether the repository supports
  consistent snapshots.  Section 7 goes into more detail on the consequences
  of enabling this setting on a repository.</p>
-    <dt data-md><dfn class="dfn-paneled" data-dfn-type="dfn" data-noexport id="version">VERSION</dfn>
+    <dt data-md><dfn class="dfn-paneled" data-dfn-for="role" data-dfn-type="dfn" data-noexport id="role-version">VERSION</dfn>
     <dd data-md>
      <p>an integer that is greater than 0.  Clients MUST NOT replace a
 metadata file with a version number less than the one currently trusted.</p>
@@ -2592,7 +2592,8 @@ only one unique key has that KEYID.</p>
 whose signatures are required in order to consider a file as being properly
 signed by that role.</p>
    </dl>
-   <p>A root.json example file:</p>
+   <div class="example" id="root.json-example">
+    <a class="self-link" href="#root.json-example"></a> A <a data-link-type="dfn" href="#rootjson" id="ref-for-rootjson①">root.json</a> example file: 
 <pre class="highlight"><c- p>{</c->
   <c- f>"signatures"</c-><c- p>:</c-> <c- p>[</c->
     <c- p>{</c->
@@ -2666,47 +2667,49 @@ signed by that role.</p>
   <c- p>}</c->
 <c- p>}</c->
 </pre>
+   </div>
    <h3 class="heading settled" data-level="4.4" id="snapshot.json"><span class="secno">4.4. </span><span class="content">File formats: snapshot.json</span><a class="self-link" href="#snapshot.json"></a></h3>
-   <p>The snapshot.json file is signed by the snapshot role. It MUST list the
-version numbers of the top-level targets metadata and all delegated targets
+   <p>The <dfn data-dfn-type="dfn" data-noexport id="snapshotjson">snapshot.json<a class="self-link" href="#snapshotjson"></a></dfn> file is signed by the snapshot role. It MUST list
+the version numbers of the top-level targets metadata and all delegated targets
 metadata. It MAY also list their lengths and file hashes.</p>
    <p>The "signed" portion of snapshot.json is as follows:</p>
 <pre class="highlight"><c- p>{</c->
   <c- f>"_type"</c-> <c- p>:</c-> <c- u>"snapshot"</c-><c- p>,</c->
-  <c- f>"spec_version"</c-> <c- p>:</c-> SPEC_VERSION<c- p>,</c->
-  <c- f>"version"</c-> <c- p>:</c-> VERSION<c- p>,</c->
-  <c- f>"expires"</c-> <c- p>:</c-> EXPIRES<c- p>,</c->
-  <c- f>"meta"</c-> <c- p>:</c-> METAFILES
+  <c- f>"spec_version"</c-> <c- p>:</c-> <a data-link-type="dfn" href="#spec_version" id="ref-for-spec_version①">SPEC_VERSION</a><c- p>,</c->
+  <c- f>"version"</c-> <c- p>:</c-> <a data-link-type="dfn" href="#role-version" id="ref-for-role-version①">VERSION</a><c- p>,</c->
+  <c- f>"expires"</c-> <c- p>:</c-> <a data-link-type="dfn" href="#expires" id="ref-for-expires①">EXPIRES</a><c- p>,</c->
+  <c- f>"meta"</c-> <c- p>:</c-> <a data-link-type="dfn" href="#metafiles" id="ref-for-metafiles">METAFILES</a>
 <c- p>}</c->
 </pre>
-   <p>SPEC_VERSION, VERSION and EXPIRES are the same as is described for the root.json file.</p>
-   <p>METAFILES is an object whose format is the following:</p>
+   <p><a data-link-type="dfn" href="#spec_version" id="ref-for-spec_version②">SPEC_VERSION</a>, <a data-link-type="dfn" href="#role-version" id="ref-for-role-version②">VERSION</a> and <a data-link-type="dfn" href="#expires" id="ref-for-expires②">EXPIRES</a> are the same as
+is described for the <a data-link-type="dfn" href="#rootjson" id="ref-for-rootjson②">root.json</a> file.</p>
+   <p><dfn class="dfn-paneled" data-dfn-type="dfn" data-noexport id="metafiles">METAFILES</dfn> is an object whose format is the following:</p>
 <pre class="highlight"><c- p>{</c->
-  METAPATH : {
-    <c- f>"version"</c-> <c- p>:</c-> VERSION<c- p>,</c->
-    (<c- f>"length"</c-> <c- p>:</c-> LENGTH<c- p>,</c-> |
-      <c- f>"hashes"</c-> <c- p>:</c-> HASHES)
+  <a data-link-type="dfn" href="#metapath" id="ref-for-metapath">METAPATH</a> : {
+    <c- f>"version"</c-> <c- p>:</c-> <a data-link-type="dfn" href="#metapath-version" id="ref-for-metapath-version">VERSION</a><c- p>,</c->
+    (<c- f>"length"</c-> <c- p>:</c-> <a data-link-type="dfn" href="#length" id="ref-for-length">LENGTH</a><c- p>,</c-> |
+      <c- f>"hashes"</c-> <c- p>:</c-> <a data-link-type="dfn" href="#hashes" id="ref-for-hashes">HASHES</a>)
   <c- p>}</c->,
   ...
 }
 </pre>
    <p>where:</p>
    <dl>
-    <dt data-md>METAPATH
+    <dt data-md><dfn class="dfn-paneled" data-dfn-type="dfn" data-noexport id="metapath">METAPATH</dfn>
     <dd data-md>
      <p>the file path of the metadata on the repository relative to the
 metadata base URL. For snapshot.json, these are top-level targets metadata
 and delegated targets metadata.</p>
-    <dt data-md>VERSION
+    <dt data-md><dfn class="dfn-paneled" data-dfn-for="metapath" data-dfn-type="dfn" data-noexport id="metapath-version">VERSION</dfn>
     <dd data-md>
-     <p>the integer version number as shown in the metadata file at METAPATH.</p>
-    <dt data-md>LENGTH
+     <p>the integer version number as shown in the metadata file at <a data-link-type="dfn" href="#metapath" id="ref-for-metapath①">METAPATH</a>.</p>
+    <dt data-md><dfn class="dfn-paneled" data-dfn-type="dfn" data-noexport id="length">LENGTH</dfn>
     <dd data-md>
      <p>the integer length in bytes of the metadata file at METAPATH. It
 is OPTIONAL and can be omitted to reduce the snapshot metadata file size. In
 that case the client MUST use a custom download limit for the listed
 metadata.</p>
-    <dt data-md>HASHES
+    <dt data-md><dfn class="dfn-paneled" data-dfn-type="dfn" data-noexport id="hashes">HASHES</dfn>
     <dd data-md>
      <p>a dictionary that specifies one or more hashes of the metadata
 file at METAPATH, including their cryptographic hash function. For example:
@@ -2714,7 +2717,8 @@ file at METAPATH, including their cryptographic hash function. For example:
 the snapshot metadata file size.  In that case the repository MUST guarantee
 that VERSION alone unambiguously identifies the metadata at METAPATH.</p>
    </dl>
-   <p>A snapshot.json example file:</p>
+   <div class="example" id="example-snapshot.json">
+    <a class="self-link" href="#example-snapshot.json"></a> A <code>snapshot.json</code> example file: 
 <pre class="highlight"><c- p>{</c->
   <c- f>"signatures"</c-><c- p>:</c-> <c- p>[</c->
     <c- p>{</c->
@@ -2749,6 +2753,7 @@ that VERSION alone unambiguously identifies the metadata at METAPATH.</p>
   <c- p>}</c->
 <c- p>}</c->
 </pre>
+   </div>
    <h3 class="heading settled" data-level="4.5" id="targets.json"><span class="secno">4.5. </span><span class="content">File formats: targets.json and delegated target roles</span><a class="self-link" href="#targets.json"></a></h3>
    <p>The "signed" portion of targets.json is as follows:</p>
 <pre class="highlight"><c- p>{</c->
@@ -3551,6 +3556,7 @@ returns a result.</p>
      <li><a href="#scheme-ed25519">dfn for scheme</a><span>, in §4.2</span>
     </ul>
    <li><a href="#expires">EXPIRES</a><span>, in §4.3</span>
+   <li><a href="#hashes">HASHES</a><span>, in §4.4</span>
    <li>
     KEYID
     <ul>
@@ -3559,6 +3565,9 @@ returns a result.</p>
     </ul>
    <li><a href="#keytype">KEYTYPE</a><span>, in §4.2</span>
    <li><a href="#keyval">KEYVAL</a><span>, in §4.2</span>
+   <li><a href="#length">LENGTH</a><span>, in §4.4</span>
+   <li><a href="#metafiles">METAFILES</a><span>, in §4.4</span>
+   <li><a href="#metapath">METAPATH</a><span>, in §4.4</span>
    <li>
     PUBLIC
     <ul>
@@ -3572,13 +3581,20 @@ returns a result.</p>
      <li><a href="#role-role">dfn for role</a><span>, in §4.2</span>
      <li><a href="#root-role">dfn for root</a><span>, in §4.3</span>
     </ul>
+   <li><a href="#rootjson">root.json</a><span>, in §4.3</span>
    <li><a href="#keytype-rsa">"rsa"</a><span>, in §4.2</span>
    <li><a href="#scheme-rsassa-pss-sha256">"rsassa-pss-sha256"</a><span>, in §4.2</span>
    <li><a href="#scheme">SCHEME</a><span>, in §4.2</span>
    <li><a href="#signature">SIGNATURE</a><span>, in §4.2</span>
+   <li><a href="#snapshotjson">snapshot.json</a><span>, in §4.4</span>
    <li><a href="#spec_version">SPEC_VERSION</a><span>, in §4.3</span>
    <li><a href="#threshold">THRESHOLD</a><span>, in §4.3</span>
-   <li><a href="#version">VERSION</a><span>, in §4.3</span>
+   <li>
+    VERSION
+    <ul>
+     <li><a href="#metapath-version">dfn for metapath</a><span>, in §4.4</span>
+     <li><a href="#role-version">dfn for role</a><span>, in §4.3</span>
+    </ul>
   </ul>
   <aside class="dfn-panel" data-for="term-for-map-key">
    <a href="https://infra.spec.whatwg.org/#map-key">https://infra.spec.whatwg.org/#map-key</a><b>Referenced in:</b>
@@ -3692,10 +3708,18 @@ returns a result.</p>
     <li><a href="#ref-for-keyval-ecdsa-public">4.2. File formats: general principles</a>
    </ul>
   </aside>
+  <aside class="dfn-panel" data-for="rootjson">
+   <b><a href="#rootjson">#rootjson</a></b><b>Referenced in:</b>
+   <ul>
+    <li><a href="#ref-for-rootjson">4.3. File formats: root.json</a> <a href="#ref-for-rootjson①">(2)</a>
+    <li><a href="#ref-for-rootjson②">4.4. File formats: snapshot.json</a>
+   </ul>
+  </aside>
   <aside class="dfn-panel" data-for="spec_version">
    <b><a href="#spec_version">#spec_version</a></b><b>Referenced in:</b>
    <ul>
     <li><a href="#ref-for-spec_version">4.3. File formats: root.json</a>
+    <li><a href="#ref-for-spec_version①">4.4. File formats: snapshot.json</a> <a href="#ref-for-spec_version②">(2)</a>
    </ul>
   </aside>
   <aside class="dfn-panel" data-for="consistent_snapshot">
@@ -3704,16 +3728,18 @@ returns a result.</p>
     <li><a href="#ref-for-consistent_snapshot">4.3. File formats: root.json</a>
    </ul>
   </aside>
-  <aside class="dfn-panel" data-for="version">
-   <b><a href="#version">#version</a></b><b>Referenced in:</b>
+  <aside class="dfn-panel" data-for="role-version">
+   <b><a href="#role-version">#role-version</a></b><b>Referenced in:</b>
    <ul>
-    <li><a href="#ref-for-version">4.3. File formats: root.json</a>
+    <li><a href="#ref-for-role-version">4.3. File formats: root.json</a>
+    <li><a href="#ref-for-role-version①">4.4. File formats: snapshot.json</a> <a href="#ref-for-role-version②">(2)</a>
    </ul>
   </aside>
   <aside class="dfn-panel" data-for="expires">
    <b><a href="#expires">#expires</a></b><b>Referenced in:</b>
    <ul>
     <li><a href="#ref-for-expires">4.3. File formats: root.json</a>
+    <li><a href="#ref-for-expires①">4.4. File formats: snapshot.json</a> <a href="#ref-for-expires②">(2)</a>
    </ul>
   </aside>
   <aside class="dfn-panel" data-for="root-role">
@@ -3732,6 +3758,36 @@ returns a result.</p>
    <b><a href="#threshold">#threshold</a></b><b>Referenced in:</b>
    <ul>
     <li><a href="#ref-for-threshold">4.3. File formats: root.json</a>
+   </ul>
+  </aside>
+  <aside class="dfn-panel" data-for="metafiles">
+   <b><a href="#metafiles">#metafiles</a></b><b>Referenced in:</b>
+   <ul>
+    <li><a href="#ref-for-metafiles">4.4. File formats: snapshot.json</a>
+   </ul>
+  </aside>
+  <aside class="dfn-panel" data-for="metapath">
+   <b><a href="#metapath">#metapath</a></b><b>Referenced in:</b>
+   <ul>
+    <li><a href="#ref-for-metapath">4.4. File formats: snapshot.json</a> <a href="#ref-for-metapath①">(2)</a>
+   </ul>
+  </aside>
+  <aside class="dfn-panel" data-for="metapath-version">
+   <b><a href="#metapath-version">#metapath-version</a></b><b>Referenced in:</b>
+   <ul>
+    <li><a href="#ref-for-metapath-version">4.4. File formats: snapshot.json</a>
+   </ul>
+  </aside>
+  <aside class="dfn-panel" data-for="length">
+   <b><a href="#length">#length</a></b><b>Referenced in:</b>
+   <ul>
+    <li><a href="#ref-for-length">4.4. File formats: snapshot.json</a>
+   </ul>
+  </aside>
+  <aside class="dfn-panel" data-for="hashes">
+   <b><a href="#hashes">#hashes</a></b><b>Referenced in:</b>
+   <ul>
+    <li><a href="#ref-for-hashes">4.4. File formats: snapshot.json</a>
    </ul>
   </aside>
 <script>/* script-dfn-panel */
